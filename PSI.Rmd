@@ -1,0 +1,170 @@
+---
+title: "PSI"
+output: html_document
+date: '2023-04-10'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("scales")
+#install.packages("ggplot2")
+# install.packages("emdist")
+library(readr)
+library(data.table)
+library(emdist)
+library(ggplot2)
+```
+
+
+# Binarization of the psi value 
+
+This file has the aim to binarize the psi value into 0 and 1. 0 signifies that the exon is excluded whereby 1 signifies that the exon is included.
+
+For that the script has different parts consisting of:
+1. Read in events.csv file 
+2. Create a histogram of every event 
+3. Normalize the histograms 
+4. Use a distance function (earth movers distance, Kullback Leider distance, Wasserstein distance) to calculate the distances of the histograms and create a distance matrix. 
+5. Use the k-means algorithm 
+6. Cluster the histograms 
+
+
+## 1. Read in events.csv file 
+
+```{r}
+# Read csv file into the data frame "events"
+events <- read.csv("/nfs/home/students/a.schuhe/template/events.csv", header=TRUE)
+# Show the first rows of the created data frame
+head(events)
+# Transpose data frame
+events_t <- transpose(events)
+# Redefine row and column names
+rownames(events_t) <- colnames(events)
+first_row <- events_t[1, ]
+colnames(events_t) <- first_row
+# select only the rows where the rowname starts with "IHECRE" 
+events_t_IHEC <- events_t[grep("^IHECRE", rownames(events_t)), ]
+head(events_t_IHEC)
+dim(events_t_IHEC)
+length(events_t_IHEC)
+```
+
+## 2. Create a histogram of every event 
+## 3. Normalize the histograms 
+## 4. Use the distance function "earth movers distance" to calculate the distances of the histograms and create a distance matrix.
+
+```{r}
+##Test##-------------------------##-------------------------##-------------------------##-------------------------##-------------------------
+  events_t_IHEC[ , 1] <- suppressWarnings(as.numeric(events_t_IHEC[ , 1]))
+  
+  p1 <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , 1])) +
+          geom_histogram(aes(y=..count../sum(..count..)), na.rm=TRUE, bins=20, breaks = c(0, seq(0.05, 0.95, length.out=18), 1), binwidth=0.1, fill="lightblue", color="black") +
+          # aes(y = ..density..) -> to normalize the histogram and to compute the histogram as densities (WICHTIG -> area darunter nicht 1) --> therefore
+          # aes(y = ..count../sum(..count..)) to normalize the histogram and the highest y value is 1 and the area of all bars sums up to 1
+          # breaks -> exactly one bin for 0 and 1 and 18 bins inbetween,
+          # na.rm=TRUE -> missing values are silently removed
+          # bins -> number of bins 
+          # colour -> colour of the border line of the bars
+          labs(title = sprintf("%s", names(events_t_IHEC[1])), x = "PSI value", y = "Density")
+  p1
+  hist_data_p1 <- ggplot_build(p1)$data[[1]]
+  print(hist_data_p1$y)
+  
+  p11 <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , 1])) +
+          geom_histogram(aes(y=..count../sum(..count..)), na.rm=TRUE, bins=50, breaks = c(0, seq(0.05, 0.95, length.out=48), 1), binwidth=0.1, fill="lightblue", color="black") +
+          # aes(y = ..density..) -> to normalize the histogram and to compute the histogram as densities (WICHTIG -> area darunter nicht 1) --> therefore
+          # aes(y = ..count../sum(..count..)) to normalize the histogram and the highest y value is 1 and the area of all bars sums up to 1
+          # breaks -> exactly one bin for 0 and 1 and 18 bins inbetween,
+          # na.rm=TRUE -> missing values are silently removed
+          # bins -> number of bins 
+          # colour -> colour of the border line of the bars
+          labs(title = sprintf("%s", names(events_t_IHEC[1])), x = "PSI value", y = "Density")
+  p11
+  hist_data_p11 <- ggplot_build(p11)$data[[1]]
+  print(hist_data_p11$y)
+  
+  print(hist_data_p1$y[3])
+  
+  print(hist_data_p1$x)
+  sum(hist_data_p1$y)
+##-------------------------##-------------------------##-------------------------##-------------------------##-------------------------
+# create an empty matrix to store the EMD distances
+emd_matrix <- matrix(NA, nrow = length(events_t_IHEC), ncol = length(events_t_IHEC))
+rownames(emd_matrix) <- colnames(events_t_IHEC)
+colnames(emd_matrix) <- colnames(events_t_IHEC)
+
+histo_matrix <- matrix(NA, nrow=length(events_t_IHEC), ncol=19)
+rownames(histo_matrix) <- colnames(events_t_IHEC)
+
+
+for (i in 1:length(events_t_IHEC)) {
+
+  SEorRI <- sub(".*;([[:alnum:]_]+):.*", "\\1", names(events_t_IHEC[i]))
+  events_t_IHEC[ , i] <- suppressWarnings(as.numeric(events_t_IHEC[ , i])) 
+  
+  if(SEorRI == "SE") {
+    colType <- "lightblue"
+  } else {
+    colType <- "lightpink"
+  }
+  p1 <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , i])) +
+          geom_histogram(aes(y=..count../sum(..count..)), na.rm=TRUE, bins=20, breaks = c(0, seq(0.05, 0.95, length.out=18), 1), binwidth=0.1, fill=colType, color="black") +
+          # aes(y = ..density..) -> to normalize the histogram and to compute the histogram as densities (WICHTIG -> area darunter nicht 1) --> therefore
+          # aes(y = ..count../sum(..count..)) to normalize the histogram and the highest y value is 1 and the area of all bars sums up to 1
+          # breaks -> exactly one bin for 0 and 1 and 18 bins inbetween,
+          # na.rm=TRUE -> missing values are silently removed
+          # bins -> number of bins 
+          # colour -> colour of the border line of the bars
+          labs(title = sprintf("%s", names(events_t_IHEC[i])), x = "PSI value", y = "Density") 
+
+  # ggsave(device="pdf", filename=sprintf("histogram_%s.pdf", names(events_t_IHEC[i])), p1)
+  # TODO: Should I save all the histograms? -> My idea: save only 3-4 to demonstrate on the poster what I've done 
+  hist_data <- ggplot_build(p1)$data[[1]]
+  
+  if (!is.null(hist_data$y)) {
+    for (j in 1:19) {
+    histo_matrix[i, j] <- hist_data$y[j]
+    } 
+  }
+
+  
+}
+
+x <- c(0, seq(0.05, 0.95, length.out=18), 1)
+print(x)
+# calculate the EMD distance for each pair of histograms
+for (i in 1:length(events_t_IHEC)) {
+  hist_data_p1 <- histo_matrix[i,]
+  
+  begin <- Sys.time()
+  for (j in i:length(events_t_IHEC)) {
+    if (i!=j){
+      hist_data_p2 <- histo_matrix[j,]
+      if (!is.na(hist_data_p1[1]) & !is.na(hist_data_p2[1])) {
+        A <- matrix(c(hist_data_p1, x), ncol = 2)
+        print(dim(A))
+        B <- matrix(c(hist_data_p2, x), ncol = 2)
+        print(dim(B))
+        # calculate the EMD distance
+        emd_dist <- emd(A, B)
+      
+        # store the EMD distance in the matrix
+        emd_matrix[i, j] <- emd_dist
+        emd_matrix[j, i] <- emd_dist
+      }
+    }
+  }
+  end <- Sys.time()
+  print(end-begin)
+}
+
+# print the EMD distance matrix
+emd_matrix
+
+
+```
+
+
