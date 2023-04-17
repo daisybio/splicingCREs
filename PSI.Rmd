@@ -16,6 +16,11 @@ library(readr)
 library(data.table)
 library(emdist)
 library(ggplot2)
+library(cluster)
+if (!require(factoextra)) {
+  install.packages("factoextra")
+}
+library(stats)
 ```
 
 
@@ -74,10 +79,6 @@ bin_midpoints <- hist_data_p1$x #the values of the midpoints of the bins are the
 
 # create an empty matrix to store the values of each histogram
 histo_matrix <- matrix(0, nrow=length(events_t_IHEC), ncol=length(bin_midpoints), dimnames=list(colnames(events_t_IHEC), bin_midpoints))
-# create an empty matrix to store the EMD distances
-emd_matrix <- matrix(NA, nrow = length(events_t_IHEC), ncol = length(events_t_IHEC), dimnames=list(colnames(events_t_IHEC), colnames(events_t_IHEC)))
-
-
 
 for (i in 1:length(events_t_IHEC)) {
   print(i)
@@ -111,26 +112,35 @@ for (i in 1:length(events_t_IHEC)) {
 }
  
 write.csv(histo_matrix, file = "/nfs/home/students/a.schuhe/scripts/splicingREMs/histo_matrix.csv") #, row.names = TRUE, col.names = TRUE, sep = ',')
+cluster(histo_matrix)
 
+library(factoextra)
+install.packages('factoextra')
 
+# Enhanced k-means clustering
+#res.km <- eclust(df, "kmeans", nstart = 25)
+install.packages('tidyverse')
+library(tidyverse)
+k1 <- kmeans(histo_matrix, centers = 3)
+k1
 
-
-
-
+# create an empty matrix to store the EMD distances
+emd_matrix <- matrix(0, nrow = length(events_t_IHEC), ncol = length(events_t_IHEC), dimnames=list(colnames(events_t_IHEC), colnames(events_t_IHEC)))
 
 # calculate the EMD distance for each pair of histograms
 for (i in 1:length(events_t_IHEC)) {
+  print(i)
   hist_data_p1 <- histo_matrix[i,]
   
   begin <- Sys.time()
   for (j in i:length(events_t_IHEC)) {
     if (i!=j){
       hist_data_p2 <- histo_matrix[j,]
-      if (!is.na(hist_data_p1[1]) & !is.na(hist_data_p2[1])) {
-        A <- matrix(c(hist_data_p1, x), ncol = 2)
-        print(dim(A))
-        B <- matrix(c(hist_data_p2, x), ncol = 2)
-        print(dim(B))
+      if (!is.null(hist_data_p1[1]) & !is.null(hist_data_p2[1])) {
+        A <- matrix(c(hist_data_p1, bin_midpoints), ncol = 2)
+        #print(dim(A))
+        B <- matrix(c(hist_data_p2, bin_midpoints), ncol = 2)
+        #print(dim(B))
         # calculate the EMD distance
         emd_dist <- emd(A, B)
       
