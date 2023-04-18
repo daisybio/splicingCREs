@@ -17,9 +17,9 @@ library(data.table)
 library(emdist)
 library(ggplot2)
 library(cluster)
-if (!require(factoextra)) {
-  install.packages("factoextra")
-}
+#if (!require(factoextra)) {
+#  install.packages("factoextra")
+#}
 library(stats)
 ```
 
@@ -31,9 +31,9 @@ This file has the aim to binarize the psi value into 0 and 1. 0 signifies that t
 For that the script has different parts consisting of:
 1. Read in events.csv file 
 2. Create a histogram of every event 
-3. Normalize the histograms 
-4. Use a distance function (earth movers distance, Kullback Leider distance, Wasserstein distance) to calculate the distances of the histograms and create a distance matrix. 
-5. Use the k-means algorithm 
+3. Normalize the histograms and create a histogram matrix (histo_matrix) to store all the histogram values
+4. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix). 
+5. Use the k-means algorithm for the histogram matrix and the hierarchical clustering for the emd matrix. 
 6. Cluster the histograms 
 
 
@@ -61,9 +61,9 @@ head(events_t_IHEC)
 
 ```{r}
 
-
+# Create Histogram Plots (f.e. for the first event)
 events_t_IHEC[ , 1] <- suppressWarnings(as.numeric(events_t_IHEC[ , 1]))
-#geom_histogram(breaks = c(0, seq(1/18, 17/18, by = 1/18), 1))
+
 hist_p1 <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , 1])) +
           geom_histogram(aes(y=..count../sum(..count..)), na.rm=TRUE, bins=40, breaks = c(-1/40, seq(1/40, 39/40, length.out=39), 41/40), binwidth=0.1, fill="lightblue", color="black") +
           # aes(y = ..density..) -> to normalize the histogram and to compute the histogram as densities (WICHTIG -> area darunter nicht 1) --> therefore
@@ -73,11 +73,14 @@ hist_p1 <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , 1])) +
           # bins -> number of bins 
           # colour -> colour of the border line of the bars
           labs(title = sprintf("%s", names(events_t_IHEC[1])), x = "PSI value", y = "Density")
-hist_data_p1 <- ggplot_build(hist_p1)$data[[1]]
-print(hist_data_p1)
-bin_midpoints <- hist_data_p1$x #the values of the midpoints of the bins are the same for every histogram 
 
-# create an empty matrix to store the values of each histogram
+# ggsave(device="pdf", filename=sprintf("histogram_%s.pdf", names(events_t_IHEC[i])), p1)
+
+hist_data_p1 <- ggplot_build(hist_p1)$data[[1]]
+# the values of the midpoints of the bins are the same for every histogram 
+bin_midpoints <- hist_data_p1$x 
+
+# create an empty matrix (histo_matrix) to store the values of each histogram
 histo_matrix <- matrix(0, nrow=length(events_t_IHEC), ncol=length(bin_midpoints), dimnames=list(colnames(events_t_IHEC), bin_midpoints))
 
 for (i in 1:length(events_t_IHEC)) {
@@ -90,18 +93,10 @@ for (i in 1:length(events_t_IHEC)) {
   } else {
     colType <- "lightpink"
   }
+  
   histogram <- ggplot(events_t_IHEC, aes(x=events_t_IHEC[ , i])) +
           geom_histogram(aes(y=..count../sum(..count..)), na.rm=TRUE, bins=40, breaks = c(-1/40, seq(1/40, 39/40, length.out=39), 41/40), binwidth=0.1, fill=colType, color="black") +
-          # aes(y = ..density..) -> to normalize the histogram and to compute the histogram as densities (WICHTIG -> area darunter nicht 1) --> therefore
-          # aes(y = ..count../sum(..count..)) to normalize the histogram and the highest y value is 1 and the area of all bars sums up to 1
-          # breaks -> exactly one bin for 0 and 1 and 18 bins inbetween,
-          # na.rm=TRUE -> missing values are silently removed
-          # bins -> number of bins 
-          # colour -> colour of the border line of the bars
           labs(title = sprintf("%s", names(events_t_IHEC[i])), x = "PSI value", y = "Density") 
-
-  # ggsave(device="pdf", filename=sprintf("histogram_%s.pdf", names(events_t_IHEC[i])), p1)
-  # TODO: Should I save all the histograms? -> My idea: save only 3-4 to demonstrate on the poster what I've done 
   hist_data <- ggplot_build(histogram)$data[[1]]
   
   if (!is.null(hist_data$y)) {
@@ -112,19 +107,8 @@ for (i in 1:length(events_t_IHEC)) {
 }
  
 write.csv(histo_matrix, file = "/nfs/home/students/a.schuhe/scripts/splicingREMs/histo_matrix.csv") #, row.names = TRUE, col.names = TRUE, sep = ',')
-cluster(histo_matrix)
 
-library(factoextra)
-install.packages('factoextra')
-
-# Enhanced k-means clustering
-#res.km <- eclust(df, "kmeans", nstart = 25)
-install.packages('tidyverse')
-library(tidyverse)
-k1 <- kmeans(histo_matrix, centers = 3)
-k1
-
-# create an empty matrix to store the EMD distances
+# create an empty matrix (emd_matrix) to store the EMD distances
 emd_matrix <- matrix(0, nrow = length(events_t_IHEC), ncol = length(events_t_IHEC), dimnames=list(colnames(events_t_IHEC), colnames(events_t_IHEC)))
 
 # calculate the EMD distance for each pair of histograms
@@ -154,10 +138,44 @@ for (i in 1:length(events_t_IHEC)) {
   print(end-begin)
 }
 
-# print the EMD distance matrix
-emd_matrix
-
+# remove the rows where every value is NA 
+emd_matrix1 <- emd_matrix[!is.na(emd_matrix), ]
+emd_matrix2 <- emd_matrix[complete.cases(emd_matrix), ] #[apply(emd_matrix, 1, function(x) !is.nan(x)), ]
+dim(emd_matrix2)
+View(emd_matrix2)
+# rows that are completely NaN
+ind <- rowSums(is.nan(emd_matrix)) == ncol(emd_matrix)
+rows = which(rowSums(is.nan(emd_matrix)) == nrow(emd_matrix))
+emd_matrix3 <- emd_matrix[-rows, ]
+dim(emd_matrix3)
+write.csv(emd_matrix, file = "/nfs/home/students/a.schuhe/scripts/splicingREMs/emd_matrix.csv") #, row.names = TRUE, col.names = TRUE, sep = ',')
 
 ```
 
+
+# 5. Use the k-means algorithm for the histogram matrix and the hierarchical clustering for the emd matrix.
+# 6. Cluster the histograms
+
+```{r}
+
+##TEST##---------------------------##---------------------------##---------------------------##---------------------------
+cluster(histo_matrix)
+
+library(factoextra)
+#install.packages('factoextra')
+
+# Enhanced k-means clustering
+#res.km <- eclust(df, "kmeans", nstart = 25)
+#install.packages('tidyverse')
+library(tidyverse)
+k1 <- kmeans(histo_matrix, centers = 3)
+k1
+##---------------------------##---------------------------##---------------------------##---------------------------##---------------------------
+
+# Hierarchical clustering with the emd matrix (emd_matrix)
+
+hcluster_emd_matrix <- hclust(emd_matrix)
+
+
+```
 
