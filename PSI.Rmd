@@ -138,16 +138,13 @@ for (i in 1:length(events_t_IHEC)) {
   print(end-begin)
 }
 
-# remove the rows where every value is NA 
-emd_matrix1 <- emd_matrix[!is.na(emd_matrix), ]
-emd_matrix2 <- emd_matrix[complete.cases(emd_matrix), ] #[apply(emd_matrix, 1, function(x) !is.nan(x)), ]
-dim(emd_matrix2)
-View(emd_matrix2)
-# rows that are completely NaN
-ind <- rowSums(is.nan(emd_matrix)) == ncol(emd_matrix)
-rows = which(rowSums(is.nan(emd_matrix)) == nrow(emd_matrix))
-emd_matrix3 <- emd_matrix[-rows, ]
-dim(emd_matrix3)
+emd_matrixTest <- emd_matrix
+for (i in 1:length(emd_matrix)) {
+  if (!is.nan(emd_matrix[i,])) {
+    emd_matrixTest = emd_matrix[-i, ]
+  }
+}
+
 write.csv(emd_matrix, file = "/nfs/home/students/a.schuhe/scripts/splicingREMs/emd_matrix.csv") #, row.names = TRUE, col.names = TRUE, sep = ',')
 
 ```
@@ -173,8 +170,59 @@ k1
 ##---------------------------##---------------------------##---------------------------##---------------------------##---------------------------
 
 # Hierarchical clustering with the emd matrix (emd_matrix)
+emd_dist_matrix <- emd_matrix
 
-hcluster_emd_matrix <- hclust(emd_matrix)
+'m <- emd_dist_matrix + t(emd_dist_matrix) - diag(emd_dist_matrix)
+
+m# Check if the matrix is symmetric
+all(m == t(m))
+
+# Remove duplicated values
+m[lower.tri(m)] <- NA
+m <- m[!duplicated(m),]
+
+# Convert to distance matrix
+d <- as.dist(m)
+'
+
+
+emd_dist_matrix[is.nan(emd_dist_matrix)] <- NA
+dim(emd_dist_matrix)
+diag(emd_dist_matrix) <- 0
+emd_dist_matrix <- as.dist(emd_dist_matrix)
+View(emd_dist_matrix)
+dim(emd_dist_matrix)
+# The complete linkage method finds similar clusters.
+
+
+
+######
+#emd_hclust_matrix -> die Matrix inkludiert die Distanzwerte (mit emd() berechnet) -> daher nicht dist Funktion aufrufen, aber die Matrix muss in der Form einer dist Matrix sein 
+# Next Step: emd_hclust_matrix in dist Matrix Form transformieren 
+# Next Argument: Dimension der erzeugten dist Matrix darf nicht größer als 65536 observations sein 
+# Next Step: Aufteilen der erzeugten dist Matrix in unterschiedliche subsets, damit observations Größe eingehalten wird 
+
+emd_hclust_matrix <- emd_matrix
+emd_hclust_matrix[is.nan(emd_hclust_matrix)] <- 0
+diag(emd_hclust_matrix) <- 0
+emd_hclust_matrix <- as.matrix(emd_hclust_matrix)
+emd_dist_hclust <- as.dist(emd_dist_matrix)
+emd_dist_hclust <- as.matrix(emd_dist_hclust) #I don't really know if this is needed to apply hclust 
+
+# Define the number of rows in each subset
+subset_rows <- 10
+
+# Split the matrix into a list of smaller matrices
+emd_dist_hclust_Split <- split(emd_dist_hclust, rep(seq(1, nrow(emd_dist_hclust), subset_rows), each=subset_rows)[seq_along(emd_dist_hclust)])
+
+# Print the dimensions of the first subset
+print(dim(emd_dist_hclust_Split[1]))
+
+# TODO: transform lis
+
+#emd_hclust_matrix <- emd_matrix[complete.cases(emd_matrix), ]
+#dim(emd_hclust_matrix) #-> in jeder Zeile existiert anscheinend mind. 1 NA 
+system.time(hcluster_emd <- hclust(emd_hclust_matrix, method = "complete"))
 
 
 ```
