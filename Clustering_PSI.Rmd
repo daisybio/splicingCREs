@@ -1,0 +1,159 @@
+---
+title: "Clustering PSI"
+output: html_document
+date: '2023-04-10'
+---
+
+# Binarization of the PSI value 
+
+This file has the aim to binarize the PSI value into 0 and 1. 
+0 signifies that the exon is excluded whereby 1 signifies that the exon is included.
+
+For that the script has different parts consisting of:
+0. Libraries 
+1. Read in events.csv file and create a suitable data frame 
+2. Create a histogram for a requested event 
+3. Normalize the histograms and create a histogram matrix (histo_matrix) to store all the histogram values
+4. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix). 
+5. Use the k-means algorithm for the histogram matrix and the hierarchical clustering for the emd matrix. 
+6. Cluster the histograms 
+
+# 0. Libraries
+```{r}
+library(data.table)
+library(R.utils)
+library(pbmcapply)
+library(ggplot2)
+library(dplyr)
+library(sqldf)
+library(tidyverse)
+Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
+  int n = a.size();
+  NumericVector dist = NumericVector(n);
+  double emd = 0;
+  for(int i = 0; i < (n - 1); ++i) {
+    dist[i + 1] = a[i] - b[i] + dist[i];
+  }
+  dist = abs(dist);
+  for (auto& d : dist)
+    emd += d;
+  return emd;
+}')
+```
+
+
+# 1. Read in events.csv file and create a matrix that consists events which have at least one PSI value for an IHECRE entry (no complete NA rows anymore)
+
+```{r}
+# Read csv file into the data frame "events"
+events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz", row.names = 1)
+# Select only the columns that start with "IHECRE"
+ihec_cols <- grep("^IHECRE", names(events), value = TRUE)
+
+# Get the amount of NA values per row
+amount_na_row <- apply(events[ ,..ihec_cols], 1, function(x) sum(is.na(x)))
+eventsNoNARows <- events[amount_na_row < length(ihec_cols)]
+#events <- events[amount_na_row < length(ihec_cols), , drop=FALSE] # only keep the rows that contain at least one none NA value
+
+
+# Print results 
+cat('There are', as.numeric(nrow(events)-nrow(eventsNoNARows)), 'rows(events) where only NA values exist.')
+cat('Without these', as.numeric(nrow(events)-nrow(eventsNoNARows)), 'NA rows, the events file contains instead of ', as.numeric(nrow(events)), ',',as.numeric(nrow(events)), 'events where each has at least one PSI value for an IHECRE entry.')
+
+# data frame with events where only NA values exist 
+eNotIneNoNA <- sqldf('SELECT * FROM events EXCEPT SELECT * FROM eventsNoNARows')
+
+# change rownames to names of event experiment 
+eventsNoNARows <- eventsNoNARows %>% column_to_rownames(var="event_id")
+
+# create two dataframes -> one for SE and one for RI 
+events_SE <- eventsNoNARows[grepl("SE", rownames(eventsNoNARows)), ]
+events_RI <- eventsNoNARows[grepl("RI", rownames(eventsNoNARows)), ] 
+cat('There are', as.numeric(nrow(eventsNoNARows)), ' events where each has at least one PSI value for an IHECRE entry. They consist of', as.numeric(nrow(events_SE)), 
+    'Skipped Exon (SE) events and', as.numeric(nrow(events_RI)), 'Retained Intron (RI) events. So in total ', as.numeric(nrow(events_SE)+nrow(events_RI)))
+
+# create psi matrices for SE and RI 
+psi_SE <- as.matrix(events_SE[,ihec_cols])
+psi_RI <- as.matrix(events_RI[,ihec_cols])
+
+# create a list with normalized histogram values for the SE events and RI events 
+histo_bins = 50
+histo_breaks = seq(0,1,length.out=histo_bins+1)
+
+  
+histo_list_SE <- apply(psi_SE, 1, function(x) {
+  x <- x[!is.na(x)]
+  dens <- hist(x, breaks = histo_breaks, plot = FALSE)$density
+  dens/sum(dens)
+}, simplify = FALSE)
+
+histo_list_RI <- apply(psi_RI, 1, function(x) {
+  x <- x[!is.na(x)]
+  dens <- hist(x, breaks = histo_breaks, plot = FALSE)$density
+  dens/sum(dens)
+}, simplify = FALSE)
+
+histo_mat_SE <- do.call(rbind, histo_list_SE) #row -> event, column -> bin
+histo_mat_RI <- do.call(rbind, histo_list_RI)
+```
+
+
+```{r}
+# For each event the normalized histogram values are represented in the histo_mat_SE or histo_mat_RI matrix. 
+# Now, the k means clustering can be used to assign events to a cluster.
+library(stats)
+
+# how many clusters for SE/RI (https://www.r-bloggers.com/2020/05/how-to-determine-the-number-of-clusters-for-k-means-in-r/)
+# map_dbl to run many models with varying value of k (centers)
+tot_withinss_SE <- map_dbl(1:10,  function(k){
+  model_SE <- kmeans(x = histo_mat_SE, centers = k)
+  model_SE$tot.withinss
+})
+
+tot_withinss_RI <- map_dbl(1:10,  function(k){
+  model_RI <- kmeans(x = histo_mat_RI, centers = k)
+  model_RI$tot.withinss
+})
+
+# Generate a data frame containing both k and tot_withinss
+elbow_SE <- data.frame(
+  k = 1:10,
+  tot_withinss = tot_withinss_SE
+)
+elbow_RI <- data.frame(
+  k = 1:10,
+  tot_withinss = tot_withinss_RI
+)
+
+
+# Plot the elbow plot
+elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
+elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
+
+elbowplot_SE #3
+elbowplot_RI #3 or 5
+
+# Kmeans clustering 
+# Cluster the data into 3 clusters
+kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
+kmeans_RI <- kmeans(histo_mat_RI, centers = 3)
+
+# Get the cluster assignments
+cluster_assignments_SE <- kmeans_SE$cluster
+cluster_assignments_RI <- kmeans_RI$cluster
+
+cluster_assignments_RI
+cluster_assignments_SE
+
+#TODO: Which cluster has which threshold for the PSI values? 
+#Visualize kmeans cluser
+#install.packages("factoextra")
+
+
+```
+
+
+```{r}
+
+```
+
