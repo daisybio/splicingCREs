@@ -138,20 +138,30 @@ elbowplot_RI #3 or 5
 kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
 kmeans_RI <- kmeans(histo_mat_RI, centers = 3)
 
+head(kmeans_SE)
 # Get the cluster assignments
 cluster_assignments_SE <- kmeans_SE$cluster
 cluster_assignments_RI <- kmeans_RI$cluster
 
-cluster_assignments_RI
 cluster_assignments_SE
+cluster_assignments_RI
 
-#TODO: Which cluster has which threshold for the PSI values? 
-#Visualize kmeans cluser
-#install.packages("factoextra")
+#TODO: Which cluster has which threshold for the PSI values?
 
+# Visualize kmeans cluser
 
+#install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))
+#pak::pkg_install('factoextra')
+
+library('factoextra')
+kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = 'Set2', ggtheme = theme_minimal()) #ellipse.type='norm'
+kmeans_plot_SE
+kmeans_plot_RI <- fviz_cluster(kmeans(histo_mat_RI, centers = 3), geom = "point", data = histo_mat_RI, main='Cluster for the histogram values of each RI event', palette='Set2', ggtheme = theme_minimal()) #ellipse.type='norm'
+kmeans_plot_RI
 ```
 
+
+# Hierarchical Clustering with the earth mover's distance
 
 ```{r}
 
