@@ -1,0 +1,1 @@
+There are 152 rows(events) where only NA values exist.Without these 152 NA rows, the events file contains instead of  6905 , 6905 events where each has at least one PSI value for an IHECRE entry.There are 6753  events where each has at least one PSI value for an IHECRE entry. They consist of 6196 Skipped Exon (SE) events and 557 Retained Intron (RI) events. So in total  6753
