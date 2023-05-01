@@ -46,7 +46,7 @@ Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
 
 ```{r}
 # Read csv file into the data frame "events"
-events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz", row.names = 1)
+events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 # Select only the columns that start with "IHECRE"
 ihec_cols <- grep("^IHECRE", names(events), value = TRUE)
 
@@ -79,6 +79,7 @@ psi_RI <- as.matrix(events_RI[,ihec_cols])
 # create a list with normalized histogram values for the SE events and RI events 
 histo_bins = 50
 histo_breaks = seq(0,1,length.out=histo_bins+1)
+histo_breaks
 
   
 histo_list_SE <- apply(psi_SE, 1, function(x) {
@@ -130,40 +131,163 @@ elbow_RI <- data.frame(
 elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
 elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_SE.pdf")
 elbowplot_SE #3
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_RI.pdf")
 elbowplot_RI #3 or 5
+dev.off()
 
 # Kmeans clustering 
 # Cluster the data into 3 clusters
 kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
 kmeans_RI <- kmeans(histo_mat_RI, centers = 3)
 
-head(kmeans_SE)
+#head(kmeans_SE)
 # Get the cluster assignments
 cluster_assignments_SE <- kmeans_SE$cluster
 cluster_assignments_RI <- kmeans_RI$cluster
 
-cluster_assignments_SE
-cluster_assignments_RI
+#cluster_assignments_SE #6196 datapoints within the cluster
+#cluster_assignments_RI #557 datapoints within the cluster -> one datapoint represents one event
 
-#TODO: Which cluster has which threshold for the PSI values?
+# Which cluster has which threshold for the PSI values?
+
+# Choose 5 random datapoints (events) of each cluster and plot their histograms 
+# Skipped Exon
+# subset_SE_1 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 1)
+# subset_SE_2 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 2)
+# subset_SE_3 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 3)
+
+
+# Skipped Exon - Cluster Indices 
+cluster_SE_1_indices <- which(kmeans_SE[["cluster"]] == 1)
+sample_SE_1_indices <- sample(cluster_SE_1_indices, size=10)
+
+cluster_SE_2_indices <- which(kmeans_SE[["cluster"]] == 2)
+sample_SE_2_indices <- sample(cluster_SE_2_indices, size=10)
+
+cluster_SE_3_indices <- which(kmeans_SE[["cluster"]] == 3)
+sample_SE_3_indices <- sample(cluster_SE_3_indices, size=10)
+
+
+sample_SE_1 <- histo_mat_SE[sample_SE_1_indices,]
+sample_SE_2 <- histo_mat_SE[sample_SE_2_indices,]
+sample_SE_3 <- histo_mat_SE[sample_SE_3_indices,]
+
+#par(mfrow=c(1, 5))
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_1_barplot.pdf")
+sample_SE_1_histo <- apply(sample_SE_1, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 1 - Skipped Exon')}) #, main=sprintf("%s - Cluster 1 - SE", row.names(sample_SE_1)[x]))})
+dev.off()
+
+sample_SE_2
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_2_barplot.pdf")
+sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 2 - Skipped Exon')}) #, main=sprintf("%s - Cluster 2 - SE", row.names(sample_SE_2)[x]))})
+dev.off()
+
+sample_SE_3
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_3_barplot.pdf")
+sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 3 - Skipped Exon')}) #, main=sprintf("%s - Cluster 3 - SE", row.names(sample_SE_3)[x]))})
+dev.off()
+
+# Retained Intron 
+#subset_RI_1 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 1)
+#subset_RI_2 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 2)
+#subset_RI_3 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 3)
+
+cluster_RI_1_indices <- which(kmeans_RI[["cluster"]] == 1)
+sample_RI_1_indices <- sample(cluster_RI_1_indices, size=10)
+
+cluster_RI_2_indices <- which(kmeans_RI[["cluster"]] == 2)
+sample_RI_2_indices <- sample(cluster_RI_2_indices, size=10)
+
+cluster_RI_3_indices <- which(kmeans_RI[["cluster"]] == 3)
+sample_RI_3_indices <- sample(cluster_RI_3_indices, size=10)
+
+
+sample_RI_1 <- histo_mat_RI[sample_RI_1_indices,]
+sample_RI_2 <- histo_mat_RI[sample_RI_2_indices,]
+sample_RI_3 <- histo_mat_RI[sample_RI_3_indices,]
+
+#par(mfrow=c(1, 5))
+
+sample_RI_1
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_1_barplot.pdf")
+sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 1 - Retained Intron')}) #, main=sprintf("%s - Cluster 1 - RI", row.names(sample_RI_1)[x]))})
+dev.off()
+
+sample_RI_2
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_2_barplot.pdf")
+sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 2 - Retained Intron')}) #, main=sprintf("%s - Cluster 2 - RI", row.names(sample_RI_2)[x]))})
+dev.off()
+
+sample_RI_3
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_3_barplot.pdf")
+sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 3 - Retained Intron')}) #, main=sprintf("%s - Cluster 3 - RI", row.names(sample_RI_3)[x]))})
+dev.off()
+
+
+
+
 
 # Visualize kmeans cluser
+
 
 #install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))
 #pak::pkg_install('factoextra')
 
 library('factoextra')
-kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = 'Set2', ggtheme = theme_minimal()) #ellipse.type='norm'
+kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = 'Set2', ellipse.type='norm') #ggtheme = theme_minimal()) 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE.pdf")
 kmeans_plot_SE
-kmeans_plot_RI <- fviz_cluster(kmeans(histo_mat_RI, centers = 3), geom = "point", data = histo_mat_RI, main='Cluster for the histogram values of each RI event', palette='Set2', ggtheme = theme_minimal()) #ellipse.type='norm'
+dev.off()
+
+kmeans_plot_RI <- fviz_cluster(kmeans(histo_mat_RI, centers = 3), geom = "point", data = histo_mat_RI, main='Cluster for the histogram values of each RI event', palette='Set2', ellipse.type='norm') #ggtheme = theme_minimal()) 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_RI.pdf")
 kmeans_plot_RI
+dev.off()
 ```
 
 
 # Hierarchical Clustering with the earth mover's distance
 
 ```{r}
+# function: pbmclapply -> it is a wrapper around the mclapply function & it adds a progress bar to mclapply function
+upper_triangle_mat_SE <- rbindlist(pbmcapply::pbmclapply(
+  combn(histo_list_SE, 2, simplify=FALSE),
+  function(k) {
+    list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
+  }
+))
 
+upper_triangle_mat_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_mat_SE[, combination:=NULL]
+lower_triangle_mat_SE <- upper_triangle[, .(emd, from=to, to=from)]
+diagonal_mat_SE <- data.table(emd=0, from=events[, ID], to=events[, ID])
+
+emd_mat_SE <- rbindlist(list(upper_triangle_mat_SE, diagonal_mat_SE, lower_triangle_mat_SE))
+dist_dt_SE <- dcast(emd_mat_SE, from ~ to, value.var = "emd")
+dist_SE <- as.dist(as.matrix(dist_dt_SE[, -"from"]))
+plot(hclust(dist_SE))
+
+#RI
+upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
+  combn(histo_list_RI, 2, simplify=FALSE),
+  function(k) {
+    list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
+  }
+))
+
+upper_triangle_mat_RI[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_mat_RI[, combination:=NULL]
+lower_triangle_mat_RI <- upper_triangle[, .(emd, from=to, to=from)]
+diagonal_mat_RI <- data.table(emd=0, from=events[, ID], to=events[, ID])
+
+emd_mat_rI <- rbindlist(list(upper_triangle_mat_RI, diagonal_mat_RI, lower_triangle_mat_RI))
+dist_dt_RI <- dcast(emd_mat_RI, from ~ to, value.var = "emd")
+dist_RI <- as.dist(as.matrix(dist_dt_RI[, -"from"]))
+plot(hclust(dist_RI))
 ```
 
