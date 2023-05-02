@@ -128,8 +128,8 @@ elbow_RI <- data.frame(
 
 
 # Plot the elbow plot
-elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
-elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line() + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
+elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line(color='lightblue') + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
+elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line(color='lightpink') + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_SE.pdf")
 elbowplot_SE #3
@@ -138,7 +138,14 @@ dev.off()
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_RI.pdf")
 elbowplot_RI #3 or 5
 dev.off()
-
+#TODO
+elbowplot_SE_RI <- ggplot() +
+  geom_line(elbow_SE, aes(x = k, y = tot_withinss), color='lightblue') + 
+  geom_line(elbow_RI, aes(x = k, y = tot_withinss), color='lightpink') + 
+  geom_point() + 
+  scale_x_continuous(breaks = 1:10) + 
+  labs(title='Elbow Plot SE (blue) and RI (pink)', x='Number of clusters k', y='Within groups sum of squares')
+elbow
 # Kmeans clustering 
 # Cluster the data into 3 clusters
 kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
@@ -239,7 +246,25 @@ dev.off()
 #pak::pkg_install('factoextra')
 
 library('factoextra')
-kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = 'Set2', ellipse.type='norm') #ggtheme = theme_minimal()) 
+kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = c("#66C2A5", "#FC8D62", "#8DA0CB"), ellipse.type='norm', stand=TRUE, show.clust.cent=FALSE, guides=FALSE) +  #scale_color_brewer(palette='Set2', guides=FALSE)  # set guides=FALSE to remove legend
+
+  scale_color_manual(values = c("#66C2A5", "#FC8D62", "#8DA0CB"), 
+                     labels = c("Cluster A", "Cluster B", "Cluster C")) +
+  theme(legend.position = "bottom")
+# Rename cluster 1 to "Cluster A"
+kmeans_plot_SE
+
+kmeans_plot_SE <- fviz_cluster(kmeans_SE, geom = "point", data = histo_mat_SE,
+                               main = "Cluster for the histogram values of each SE event",
+                               palette = "Set2", ellipse.type = "norm") +
+  labs(color = "Cluster",
+       x = "Dimension 1",
+       y = "Dimension 2",
+       title = "K-means clustering with 3 clusters") +
+  scale_color_manual(values = c("x" = "red", "y" = "green", "z" = "blue")) +
+  theme(legend.title = element_blank())
+
+
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE.pdf")
 kmeans_plot_SE
 dev.off()
@@ -259,7 +284,7 @@ upper_triangle_mat_SE <- rbindlist(pbmcapply::pbmclapply(
   combn(histo_list_SE, 2, simplify=FALSE),
   function(k) {
     list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
-  }
+  }, mc.cores=20
 ))
 
 upper_triangle_mat_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
@@ -273,11 +298,12 @@ dist_SE <- as.dist(as.matrix(dist_dt_SE[, -"from"]))
 plot(hclust(dist_SE))
 
 #RI
+
 upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
   combn(histo_list_RI, 2, simplify=FALSE),
   function(k) {
     list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
-  }
+  }, mc.cores=20
 ))
 
 upper_triangle_mat_RI[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
