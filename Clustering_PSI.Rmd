@@ -27,6 +27,8 @@ library(ggplot2)
 library(dplyr)
 library(sqldf)
 library(tidyverse)
+library('factoextra')
+library(stats)
 Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
   int n = a.size();
   NumericVector dist = NumericVector(n);
@@ -102,7 +104,6 @@ histo_mat_RI <- do.call(rbind, histo_list_RI)
 ```{r}
 # For each event the normalized histogram values are represented in the histo_mat_SE or histo_mat_RI matrix. 
 # Now, the k means clustering can be used to assign events to a cluster.
-library(stats)
 
 # how many clusters for SE/RI (https://www.r-bloggers.com/2020/05/how-to-determine-the-number-of-clusters-for-k-means-in-r/)
 # map_dbl to run many models with varying value of k (centers)
@@ -138,14 +139,20 @@ dev.off()
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_RI.pdf")
 elbowplot_RI #3 or 5
 dev.off()
-#TODO
+
 elbowplot_SE_RI <- ggplot() +
-  geom_line(elbow_SE, aes(x = k, y = tot_withinss), color='lightblue') + 
-  geom_line(elbow_RI, aes(x = k, y = tot_withinss), color='lightpink') + 
-  geom_point() + 
-  scale_x_continuous(breaks = 1:10) + 
-  labs(title='Elbow Plot SE (blue) and RI (pink)', x='Number of clusters k', y='Within groups sum of squares')
-elbow
+  geom_line(data = elbow_SE, aes(x = k, y = tot_withinss, color = "SE"), size = 1.5) +
+  geom_line(data = elbow_RI, aes(x = k, y = tot_withinss, color = "RI"), size = 1.5) +
+  geom_point(data = elbow_SE, aes(x = k, y = tot_withinss), size = 2) +
+  geom_point(data = elbow_RI, aes(x = k, y = tot_withinss), size = 2) +
+  scale_x_continuous(breaks = 1:10) +
+  scale_color_manual(values = c("lightblue", "lightpink"), labels = c("SE", "RI")) +
+  labs(title='Elbow Plot for Skipped Exon and Retained Intron', x='Number of clusters k', y='Within groups sum of squares')
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_SE_RI.pdf")
+elbowplot_SE_RI
+dev.off()
+
 # Kmeans clustering 
 # Cluster the data into 3 clusters
 kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
@@ -167,7 +174,6 @@ cluster_assignments_RI <- kmeans_RI$cluster
 # subset_SE_2 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 2)
 # subset_SE_3 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 3)
 
-
 # Skipped Exon - Cluster Indices 
 cluster_SE_1_indices <- which(kmeans_SE[["cluster"]] == 1)
 sample_SE_1_indices <- sample(cluster_SE_1_indices, size=10)
@@ -178,27 +184,38 @@ sample_SE_2_indices <- sample(cluster_SE_2_indices, size=10)
 cluster_SE_3_indices <- which(kmeans_SE[["cluster"]] == 3)
 sample_SE_3_indices <- sample(cluster_SE_3_indices, size=10)
 
-
 sample_SE_1 <- histo_mat_SE[sample_SE_1_indices,]
 sample_SE_2 <- histo_mat_SE[sample_SE_2_indices,]
 sample_SE_3 <- histo_mat_SE[sample_SE_3_indices,]
 
-#par(mfrow=c(1, 5))
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_1_barplot.pdf")
-sample_SE_1_histo <- apply(sample_SE_1, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 1 - Skipped Exon')}) #, main=sprintf("%s - Cluster 1 - SE", row.names(sample_SE_1)[x]))})
+sample_SE_1_histo <- apply(sample_SE_1, 1, function(x) {
+  barplot(x, plot = TRUE, xlab = 'Amount of Bins', xaxt='n', main="Random event of cluster 'Included - Skipped Exon'", width=1)
+})
 dev.off()
 
-sample_SE_2
+
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_2_barplot.pdf")
-sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 2 - Skipped Exon')}) #, main=sprintf("%s - Cluster 2 - SE", row.names(sample_SE_2)[x]))})
+sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - Skipped Exon'", xlab='Amount of Bins', width=1)}) 
 dev.off()
 
-sample_SE_3
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_3_barplot.pdf")
-sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 3 - Skipped Exon')}) #, main=sprintf("%s - Cluster 3 - SE", row.names(sample_SE_3)[x]))})
+sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - Skipped Exon'", xlab='Amount of Bins', width=1)}) 
 dev.off()
 
+# Quantification of the cluster
+cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
+cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
+cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
+
+combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
+histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
+
+all.equal(m_sorted, a_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
+
+
+median_cluster_SE_1 <- apply(cluster_SE_1_histo, 2, median)
 # Retained Intron 
 #subset_RI_1 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 1)
 #subset_RI_2 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 2)
@@ -218,21 +235,16 @@ sample_RI_1 <- histo_mat_RI[sample_RI_1_indices,]
 sample_RI_2 <- histo_mat_RI[sample_RI_2_indices,]
 sample_RI_3 <- histo_mat_RI[sample_RI_3_indices,]
 
-#par(mfrow=c(1, 5))
-
-sample_RI_1
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_1_barplot.pdf")
-sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 1 - Retained Intron')}) #, main=sprintf("%s - Cluster 1 - RI", row.names(sample_RI_1)[x]))})
+sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - Retained Intron'", xlab='Amount of Bin', width=1)})
 dev.off()
 
-sample_RI_2
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_2_barplot.pdf")
-sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 2 - Retained Intron')}) #, main=sprintf("%s - Cluster 2 - RI", row.names(sample_RI_2)[x]))})
+sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced  - Retained Intron'", xlab='Amount of Bin', width=1)})
 dev.off()
 
-sample_RI_3
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_3_barplot.pdf")
-sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main='Random event of cluster 3 - Retained Intron')}) #, main=sprintf("%s - Cluster 3 - RI", row.names(sample_RI_3)[x]))})
+sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Included - Retained Intron'", xlab='Amount of Bin', width=1)}) 
 dev.off()
 
 
@@ -245,34 +257,89 @@ dev.off()
 #install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))
 #pak::pkg_install('factoextra')
 
-library('factoextra')
-kmeans_plot_SE <- fviz_cluster(kmeans(histo_mat_SE, centers = 3), geom = "point", data = histo_mat_SE, main='Cluster for the histogram values of each SE event', palette = c("#66C2A5", "#FC8D62", "#8DA0CB"), ellipse.type='norm', stand=TRUE, show.clust.cent=FALSE, guides=FALSE) +  #scale_color_brewer(palette='Set2', guides=FALSE)  # set guides=FALSE to remove legend
+kmeans_plot_SE_k3 <- fviz_cluster(
+  kmeans(histo_mat_SE, centers = 3), 
+  geom = "point", 
+  data = histo_mat_SE, 
+  main = 'Cluster for the histogram values of each SE event (3 clusters)',
+  ellipse.type = 'norm') +
+  scale_color_manual(
+    name = 'Cluster', 
+    labels = c('Included', 'Alternatively Spliced', 'Excluded'), 
+    values = c('skyblue3', 'darkseagreen3', 'lightpink')) #+ theme(legend.position = 'none')
 
-  scale_color_manual(values = c("#66C2A5", "#FC8D62", "#8DA0CB"), 
-                     labels = c("Cluster A", "Cluster B", "Cluster C")) +
-  theme(legend.position = "bottom")
-# Rename cluster 1 to "Cluster A"
-kmeans_plot_SE
+######
 
-kmeans_plot_SE <- fviz_cluster(kmeans_SE, geom = "point", data = histo_mat_SE,
-                               main = "Cluster for the histogram values of each SE event",
-                               palette = "Set2", ellipse.type = "norm") +
-  labs(color = "Cluster",
-       x = "Dimension 1",
-       y = "Dimension 2",
-       title = "K-means clustering with 3 clusters") +
-  scale_color_manual(values = c("x" = "red", "y" = "green", "z" = "blue")) +
-  theme(legend.title = element_blank())
+  scale_color_manual(
+    name = 'Cluster', 
+    labels = c('Included', 'Alternatively Spliced', 'Excluded'), 
+    values = c('skyblue3', 'slateblue3', 'lightpink')
+  )
+#################
+kmeans_plot_SE_k3 <- fviz_cluster(
+  kmeans(histo_mat_SE, centers = 3), 
+  geom = "point", 
+  data = histo_mat_SE, 
+  main = 'Cluster for the histogram values of each SE event (3 clusters)',
+  palette = c('skyblue3', 'slateblue3', 'lightpink'),
+  ellipse.type = 'norm') +
+  theme(legend.position = 'none') 
+ 
+# skyblue3: Cluster 1 SE -> Included
+# slateblue3: Cluster 2 SE -> Alternatively Spliced
+# lightpink: Cluster 3 SE -> Excluded 
 
+
+# Create a separate custom legend using ggplot2
+custom_legend <- ggplot() +
+  geom_point(aes(x = 1, y = 1, color = c('skyblue3', 'slateblue3', 'lightpink')),
+             shape = 16, size = 4) +
+  scale_color_manual(
+    name = 'Cluster',
+    labels = c('Included', 'Alternatively Spliced', 'Excluded'),
+    values = c('skyblue', 'slateblue', 'lightpink')
+  ) +
+  theme_void()
+
+# Combine the cluster plot and custom legend
+plot_combined <- cowplot::plot_grid(kmeans_plot_SE_k3, custom_legend, ncol = 2, rel_widths = c(0.8, 0.2))
+
+pdf('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE_k3_legend.pdf')
+plot_combined
+dev.off()
+#################
+
+kmeans_plot_SE <- fviz_cluster(
+  kmeans(histo_mat_SE, centers = 3), 
+  geom = "point", 
+  data = histo_mat_SE, 
+  main='Cluster for the histogram values of each SE event',
+  ellipse.type='norm', 
+  stand=TRUE, 
+  show.clust.cent=FALSE)
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE.pdf")
 kmeans_plot_SE
 dev.off()
 
-kmeans_plot_RI <- fviz_cluster(kmeans(histo_mat_RI, centers = 3), geom = "point", data = histo_mat_RI, main='Cluster for the histogram values of each RI event', palette='Set2', ellipse.type='norm') #ggtheme = theme_minimal()) 
+kmeans_plot_RI <- fviz_cluster(
+  kmeans(histo_mat_RI, centers = 3), 
+  geom = "point", 
+  data = histo_mat_RI, 
+  main='Cluster for the histogram values of each RI event', 
+  palette='Set2', 
+  ellipse.type='norm') 
+
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_RI.pdf")
 kmeans_plot_RI
 dev.off()
+
+
+
+
+
+
+
 ```
 
 
