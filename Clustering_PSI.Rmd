@@ -1,22 +1,25 @@
 ---
 title: "Clustering PSI"
+author: "Aïsha Schuhegger"
+note: "written with the help of Quirin Manz"
 output: html_document
-date: '2023-04-10'
+date: "2023-04-10"
 ---
 
 # Binarization of the PSI value 
 
-This file has the aim to binarize the PSI value into 0 and 1. 
+This file has the aim to cluster the events regarding their PSI values to be able to binarize the PSI value into 0 and 1. 
 0 signifies that the exon is excluded whereby 1 signifies that the exon is included.
 
 For that the script has different parts consisting of:
 0. Libraries 
-1. Read in events.csv file and create a suitable data frame 
-2. Create a histogram for a requested event 
-3. Normalize the histograms and create a histogram matrix (histo_matrix) to store all the histogram values
-4. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix). 
-5. Use the k-means algorithm for the histogram matrix and the hierarchical clustering for the emd matrix. 
-6. Cluster the histograms 
+1. Read in events.csv file and create a matrix that consists events which have at least one PSI value for an IHECRE entry (no complete NA rows anymore)
+2. Create histograms for all the events 
+3. K means clustering is used to assign events to a cluster 
+4. Visualization of k means clustering results 
+5. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) 
+6. Hierarchical clustering for the emd matrix
+
 
 # 0. Libraries
 ```{r}
@@ -55,15 +58,10 @@ ihec_cols <- grep("^IHECRE", names(events), value = TRUE)
 # Get the amount of NA values per row
 amount_na_row <- apply(events[ ,..ihec_cols], 1, function(x) sum(is.na(x)))
 eventsNoNARows <- events[amount_na_row < length(ihec_cols)]
-#events <- events[amount_na_row < length(ihec_cols), , drop=FALSE] # only keep the rows that contain at least one none NA value
-
 
 # Print results 
 cat('There are', as.numeric(nrow(events)-nrow(eventsNoNARows)), 'rows(events) where only NA values exist.')
 cat('Without these', as.numeric(nrow(events)-nrow(eventsNoNARows)), 'NA rows, the events file contains instead of ', as.numeric(nrow(events)), ',',as.numeric(nrow(events)), 'events where each has at least one PSI value for an IHECRE entry.')
-
-# data frame with events where only NA values exist 
-eNotIneNoNA <- sqldf('SELECT * FROM events EXCEPT SELECT * FROM eventsNoNARows')
 
 # change rownames to names of event experiment 
 eventsNoNARows <- eventsNoNARows %>% column_to_rownames(var="event_id")
@@ -73,7 +71,10 @@ events_SE <- eventsNoNARows[grepl("SE", rownames(eventsNoNARows)), ]
 events_RI <- eventsNoNARows[grepl("RI", rownames(eventsNoNARows)), ] 
 cat('There are', as.numeric(nrow(eventsNoNARows)), ' events where each has at least one PSI value for an IHECRE entry. They consist of', as.numeric(nrow(events_SE)), 
     'Skipped Exon (SE) events and', as.numeric(nrow(events_RI)), 'Retained Intron (RI) events. So in total ', as.numeric(nrow(events_SE)+nrow(events_RI)))
+```
 
+# 2. Create histograms for all the events 
+```{r}
 # create psi matrices for SE and RI 
 psi_SE <- as.matrix(events_SE[,ihec_cols])
 psi_RI <- as.matrix(events_RI[,ihec_cols])
@@ -81,8 +82,6 @@ psi_RI <- as.matrix(events_RI[,ihec_cols])
 # create a list with normalized histogram values for the SE events and RI events 
 histo_bins = 50
 histo_breaks = seq(0,1,length.out=histo_bins+1)
-histo_breaks
-
   
 histo_list_SE <- apply(psi_SE, 1, function(x) {
   x <- x[!is.na(x)]
@@ -97,16 +96,17 @@ histo_list_RI <- apply(psi_RI, 1, function(x) {
 }, simplify = FALSE)
 
 histo_mat_SE <- do.call(rbind, histo_list_SE) #row -> event, column -> bin
-histo_mat_RI <- do.call(rbind, histo_list_RI)
+histo_mat_RI <- do.call(rbind, histo_list_RI) #row -> event, column -> bin
 ```
 
-
+# 3. K means clustering is used to assign events to a cluster 
 ```{r}
 # For each event the normalized histogram values are represented in the histo_mat_SE or histo_mat_RI matrix. 
 # Now, the k means clustering can be used to assign events to a cluster.
 
 # how many clusters for SE/RI (https://www.r-bloggers.com/2020/05/how-to-determine-the-number-of-clusters-for-k-means-in-r/)
 # map_dbl to run many models with varying value of k (centers)
+
 tot_withinss_SE <- map_dbl(1:10,  function(k){
   model_SE <- kmeans(x = histo_mat_SE, centers = k)
   model_SE$tot.withinss
@@ -126,7 +126,6 @@ elbow_RI <- data.frame(
   k = 1:10,
   tot_withinss = tot_withinss_RI
 )
-
 
 # Plot the elbow plot
 elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line(color='lightblue') + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
@@ -152,9 +151,14 @@ elbowplot_SE_RI <- ggplot() +
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_SE_RI.pdf")
 elbowplot_SE_RI
 dev.off()
+```
 
 # Kmeans clustering 
+
+```{r}
+# Kmeans clustering 
 # Cluster the data into 3 clusters
+set.seed(100)
 kmeans_SE <- kmeans(histo_mat_SE, centers = 3)
 kmeans_RI <- kmeans(histo_mat_RI, centers = 3)
 
@@ -165,7 +169,10 @@ cluster_assignments_RI <- kmeans_RI$cluster
 
 #cluster_assignments_SE #6196 datapoints within the cluster
 #cluster_assignments_RI #557 datapoints within the cluster -> one datapoint represents one event
+```
 
+#4. Visualization of k means clustering results
+```{r}
 # Which cluster has which threshold for the PSI values?
 
 # Choose 5 random datapoints (events) of each cluster and plot their histograms 
@@ -205,22 +212,26 @@ sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, 
 dev.off()
 
 # Quantification of the cluster
-cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
-cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
-cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
+# cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
+# cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
+# cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
 
-combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
-histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
+# combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
+# histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
 
-all.equal(m_sorted, a_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
+# all.equal(m_sorted, a_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
 
 
-median_cluster_SE_1 <- apply(cluster_SE_1_histo, 2, median)
+# median_cluster_SE_1 <- apply(cluster_SE_1_histo, 2, median)
+```
+
+
+```{r}
 # Retained Intron 
 #subset_RI_1 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 1)
 #subset_RI_2 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 2)
 #subset_RI_3 <- subset(cluster_assignments_RI, kmeans_RI[["cluster"]] == 3)
-
+set.seed(100)
 cluster_RI_1_indices <- which(kmeans_RI[["cluster"]] == 1)
 sample_RI_1_indices <- sample(cluster_RI_1_indices, size=10)
 
@@ -240,110 +251,119 @@ sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, 
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_2_barplot.pdf")
-sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced  - Retained Intron'", xlab='Amount of Bin', width=1)})
+sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Included  - Retained Intron'", xlab='Amount of Bin', width=1)})
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_3_barplot.pdf")
-sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Included - Retained Intron'", xlab='Amount of Bin', width=1)}) 
+sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - Retained Intron'", xlab='Amount of Bin', width=1)}) 
 dev.off()
+```
 
-
-
-
-
-# Visualize kmeans cluser
+# Visualization of k means clustering results
+```{r}
+# Visualize kmeans cluster
 
 
 #install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))
 #pak::pkg_install('factoextra')
 
-kmeans_plot_SE_k3 <- fviz_cluster(
-  kmeans(histo_mat_SE, centers = 3), 
-  geom = "point", 
-  data = histo_mat_SE, 
-  main = 'Cluster for the histogram values of each SE event (3 clusters)',
-  ellipse.type = 'norm') +
-  scale_color_manual(
-    name = 'Cluster', 
-    labels = c('Included', 'Alternatively Spliced', 'Excluded'), 
-    values = c('skyblue3', 'darkseagreen3', 'lightpink')) #+ theme(legend.position = 'none')
+# Create a separate custom legend using ggplot2
+# color skyblue3: Included
+# color slateblue3: Alternatively Spliced
+# color lightpink: Excluded 
 
-######
-
+custom_legend_k3 <- ggplot() +
+  geom_point(aes(x = 1, y = 1, color = factor(c("Included", "Alternatively Spliced", "Excluded"))),
+             shape = 16, size = 4) +
   scale_color_manual(
-    name = 'Cluster', 
-    labels = c('Included', 'Alternatively Spliced', 'Excluded'), 
+    name = 'Cluster',
+    labels = c('Included', 'Alternatively Spliced', 'Excluded'),
     values = c('skyblue3', 'slateblue3', 'lightpink')
-  )
-#################
+  ) +
+  theme_void()
+
+# Skipped Exon
+# color skyblue3: Cluster 1 SE -> Included
+# color slateblue3: Cluster 2 SE -> Alternatively Spliced
+# color lightpink: Cluster 3 SE -> Excluded 
+
 kmeans_plot_SE_k3 <- fviz_cluster(
-  kmeans(histo_mat_SE, centers = 3), 
+  kmeans_SE, 
   geom = "point", 
   data = histo_mat_SE, 
   main = 'Cluster for the histogram values of each SE event (3 clusters)',
   palette = c('skyblue3', 'slateblue3', 'lightpink'),
   ellipse.type = 'norm') +
   theme(legend.position = 'none') 
- 
-# skyblue3: Cluster 1 SE -> Included
-# slateblue3: Cluster 2 SE -> Alternatively Spliced
-# lightpink: Cluster 3 SE -> Excluded 
-
-
-# Create a separate custom legend using ggplot2
-custom_legend <- ggplot() +
-  geom_point(aes(x = 1, y = 1, color = c('skyblue3', 'slateblue3', 'lightpink')),
-             shape = 16, size = 4) +
-  scale_color_manual(
-    name = 'Cluster',
-    labels = c('Included', 'Alternatively Spliced', 'Excluded'),
-    values = c('skyblue', 'slateblue', 'lightpink')
-  ) +
-  theme_void()
 
 # Combine the cluster plot and custom legend
-plot_combined <- cowplot::plot_grid(kmeans_plot_SE_k3, custom_legend, ncol = 2, rel_widths = c(0.8, 0.2))
+plot_combined_SE_k3 <- cowplot::plot_grid(kmeans_plot_SE_k3, custom_legend_k3, ncol = 2, rel_widths = c(0.8, 0.2))
 
 pdf('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE_k3_legend.pdf')
-plot_combined
+plot_combined_SE_k3
 dev.off()
-#################
+```
 
-kmeans_plot_SE <- fviz_cluster(
-  kmeans(histo_mat_SE, centers = 3), 
-  geom = "point", 
-  data = histo_mat_SE, 
-  main='Cluster for the histogram values of each SE event',
-  ellipse.type='norm', 
-  stand=TRUE, 
-  show.clust.cent=FALSE)
 
-pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE.pdf")
-kmeans_plot_SE
-dev.off()
+```{r}
+# Retained Intron
+# color lightpink: Cluster 1 RI -> Excluded
+# color skyblue3: Cluster 2 RI -> Included
+# color slateblue3: Cluster 3 RI -> Alternatively Spliced
 
-kmeans_plot_RI <- fviz_cluster(
-  kmeans(histo_mat_RI, centers = 3), 
+kmeans_plot_RI_k3 <- fviz_cluster(
+  kmeans_RI, 
   geom = "point", 
   data = histo_mat_RI, 
-  main='Cluster for the histogram values of each RI event', 
-  palette='Set2', 
-  ellipse.type='norm') 
+  main = 'Cluster for the histogram values of each RI event (3 clusters)',
+  palette = c('lightpink', 'skyblue3', 'slateblue3'),
+  ellipse.type = 'norm') +
+  theme(legend.position = 'none') 
 
-pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_RI.pdf")
-kmeans_plot_RI
+# Combine the cluster plot and custom legend
+plot_combined_RI_k3 <- cowplot::plot_grid(kmeans_plot_RI_k3, custom_legend_k3, ncol = 2, rel_widths = c(0.8, 0.2))
+
+pdf('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_RI_k3_legend.pdf')
+plot_combined_RI_k3
 dev.off()
-
-
-
-
-
 
 
 ```
 
+```{r}
+# Further visualization and research if subcluster (k=4) help in splitting the 'Alternatively Spliced' Cluster in different subcluster
 
-# Hierarchical Clustering with the earth mover's distance
+set.seed(100)
+kmeans_SE_k4 <- kmeans(histo_mat_SE, centers = 4)
+kmeans_RI_k4 <- kmeans(histo_mat_RI, centers = 4)
+
+kmeans_plot_SE_k4 <- fviz_cluster(
+  kmeans_SE_k4, 
+  geom = "point", 
+  data = histo_mat_SE, 
+  main='Cluster for the histogram values of each SE event', 
+  palette='Set2', 
+  ellipse.type='norm') 
+
+pdf('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_SE_k4.pdf')
+kmeans_plot_SE_k4
+dev.off()
+
+kmeans_plot_RI_k4 <- fviz_cluster(
+  kmeans_RI_k4, 
+  geom = "point", 
+  data = histo_mat_RI, 
+  main='Cluster for the histogram values of each RI event', 
+  palette='Set2', 
+  ellipse.type='norm')
+
+pdf('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/kmeans_RI_k4.pdf')
+kmeans_plot_RI_k4
+dev.off()
+
+```
+
+# 5. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) 
 
 ```{r}
 # function: pbmclapply -> it is a wrapper around the mclapply function & it adds a progress bar to mclapply function
@@ -382,5 +402,10 @@ emd_mat_rI <- rbindlist(list(upper_triangle_mat_RI, diagonal_mat_RI, lower_trian
 dist_dt_RI <- dcast(emd_mat_RI, from ~ to, value.var = "emd")
 dist_RI <- as.dist(as.matrix(dist_dt_RI[, -"from"]))
 plot(hclust(dist_RI))
+```
+
+# 6. Hierarchical clustering for the emd matrix
+```{r}
+TODO
 ```
 
