@@ -212,17 +212,57 @@ sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, 
 dev.off()
 
 # Quantification of the cluster
-# cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
-# cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
-# cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
+cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
+nrow(cluster_SE_1_histo)
+cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
+nrow(cluster_SE_2_histo)
+cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
+nrow(cluster_SE_3_histo)
+combined_cluster_SE <- rbind(cluster_SE_1_histo, cluster_SE_2_histo, cluster_SE_3_histo)
+nrow(combined_cluster_SE)
 
-# combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
-# histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
+# Check if the data is equal -> no missing values etc. 
+combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
+histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
 
-# all.equal(m_sorted, a_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
+all.equal(combined_SE_sorted, histo_mat_SE_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
+
+# Calculate the median for each event 
+median_cluster_SE_1 <- apply(cluster_SE_1_histo, 1, median) #calculate the median (of psi value) for each event (each row)
+median_cluster_SE_2 <- apply(cluster_SE_2_histo, 1, median)
+median_cluster_SE_3 <- apply(cluster_SE_3_histo, 1, median)
+
+data_median_cluster_SE_1 <- data.frame(Median_Value = median_cluster_SE_1)
+data_median_cluster_SE_2 <- data.frame(Median_Value = median_cluster_SE_2)
+data_median_cluster_SE_3 <- data.frame(Median_Value = median_cluster_SE_3)
+
+# Create the density plot for the median values of each cluster 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterIncluded_SE.pdf")
+ggplot(data_median_cluster_SE_1, aes(x = Median_Value)) +
+  geom_density(fill = "skyblue3", alpha = 0.5) +
+  labs(title = "Density Plot of the Median Values of Cluster 'Included - Skipped Exon'",
+       x = "Median Cluster 'Included - Skipped Exon'",
+       y = "Density")
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterAlternativelySpliced_SE.pdf")
+ggplot(data_median_cluster_SE_2, aes(x = Median_Value)) +
+  geom_density(fill = "slateblue3", alpha = 0.5) +
+  labs(title = "Density Plot of the Median Values of Cluster 'Alternatively Spliced - Skipped Exon'",
+       x = "Median Cluster 'Alternatively Spliced - Skipped Exon'",
+       y = "Density")
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterExcluded_SE.pdf")
+ggplot(data_median_cluster_SE_3, aes(x = Median_Value)) +
+  geom_density(fill = "lightpink", alpha = 0.5) +
+  labs(title = "Density Plot of the Median Values of Cluster 'Excluded - Skipped Exon'",
+       x = "Median Cluster 'Excluded - Skipped Exon'",
+       y = "Density")
+dev.off()
 
 
-# median_cluster_SE_1 <- apply(cluster_SE_1_histo, 2, median)
+
 ```
 
 
