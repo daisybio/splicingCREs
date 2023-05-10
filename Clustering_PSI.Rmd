@@ -128,8 +128,8 @@ elbow_RI <- data.frame(
 )
 
 # Plot the elbow plot
-elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line(color='lightblue') + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
-elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line(color='lightpink') + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
+elbowplot_SE <- ggplot(elbow_SE, aes(x = k, y = tot_withinss)) + geom_line(color='lightblue', size=1.5) + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot SE', x='Number of clusters k', y='Within groups sum of squares')
+elbowplot_RI <- ggplot(elbow_RI, aes(x = k, y = tot_withinss)) + geom_line(color='lightpink', size=1.5) + geom_point() + scale_x_continuous(breaks = 1:10) + labs(title='Elbow Plot RI', x='Number of clusters k', y='Within groups sum of squares')
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/elbowplot_SE.pdf")
 elbowplot_SE #3
@@ -177,7 +177,7 @@ cluster_assignments_RI <- kmeans_RI$cluster
 
 # Choose 5 random datapoints (events) of each cluster and plot their histograms 
 # Skipped Exon
-subset_SE_1 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 1)
+# subset_SE_1 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 1)
 # subset_SE_2 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 2)
 # subset_SE_3 <- subset(cluster_assignments_SE, kmeans_SE[["cluster"]] == 3)
 
@@ -198,36 +198,31 @@ sample_SE_3 <- histo_mat_SE[sample_SE_3_indices,]
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_1_barplot.pdf")
 sample_SE_1_histo <- apply(sample_SE_1, 1, function(x) {
-  barplot(x, plot = TRUE, xlab = 'Amount of Bins', xaxt='n', main="Random event of cluster 'Included - Skipped Exon'", width=1)
+  barplot(x, plot = TRUE, xlab = 'Amount of Bins', xaxt='n', main="Random event of cluster 'Included - SE'", width=1)
 })
 dev.off()
 
-
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_2_barplot.pdf")
-sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - Skipped Exon'", xlab='Amount of Bins', width=1)}) 
+sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - SE'", xlab='Amount of Bins', width=1)}) 
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_3_barplot.pdf")
-sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - Skipped Exon'", xlab='Amount of Bins', width=1)}) 
+sample_SE_3_histo <- apply(sample_SE_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - SE'", xlab='Amount of Bins', width=1)}) 
 dev.off()
 
 # Quantification of the cluster
 cluster_SE_1_histo <- histo_mat_SE[cluster_SE_1_indices,]
-nrow(cluster_SE_1_histo)
-
 cluster_SE_2_histo <- histo_mat_SE[cluster_SE_2_indices,]
-nrow(cluster_SE_2_histo)
 cluster_SE_3_histo <- histo_mat_SE[cluster_SE_3_indices,]
-nrow(cluster_SE_3_histo)
-combined_cluster_SE <- rbind(cluster_SE_1_histo, cluster_SE_2_histo, cluster_SE_3_histo)
-nrow(combined_cluster_SE)
 
 # Check if the data is equal -> no missing values etc. 
+combined_cluster_SE <- rbind(cluster_SE_1_histo, cluster_SE_2_histo, cluster_SE_3_histo)
 combined_SE_sorted <- combined_cluster_SE[order(rownames(combined_cluster_SE)), ]
 histo_mat_SE_sorted <- histo_mat_SE[order(rownames(histo_mat_SE)),]
 
 all.equal(combined_SE_sorted, histo_mat_SE_sorted) #TRUE -> use of cluster_SE_x_histo is verificated 
 
+# Calculate psi matrix for each cluster 
 psi_SE_Included <- psi_SE[rownames(cluster_SE_1_histo),]
 psi_SE_AltSpl <- psi_SE[rownames(cluster_SE_2_histo),]
 psi_SE_Excluded <- psi_SE[rownames(cluster_SE_3_histo),]
@@ -241,11 +236,15 @@ data_median_cluster_SE_Included <- data.frame(Median_Value = median_cluster_SE_I
 data_median_cluster_SE_AltSpl <- data.frame(Median_Value = median_cluster_SE_AltSpl)
 data_median_cluster_SE_Excluded <- data.frame(Median_Value = median_cluster_SE_Excluded)
 
+data_median_cluster_SE_AltSpl <-  data_median_cluster_SE_AltSpl[order(data_median_cluster_SE_AltSpl$Median_Value),]
+quantile_SE_AltSpl <- quantile(data_median_cluster_SE_AltSpl, probs = seq(0, 1, 1/4))
+quantile_SE_AltSpl
+
 # Create the density plot for the median values of each cluster 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterIncluded_SE.pdf")
 ggplot(data_median_cluster_SE_Included, aes(x = Median_Value)) +
   geom_density(fill = "skyblue3", alpha = 0.5) +
-  labs(title = "Density Plot of the Median Values of Cluster 'Included - Skipped Exon'",
+  labs(title = "Density Plot of the Median Values of Cluster 'Included - SE'",
        x = "PSI Values - Cluster 'Included - Skipped Exon'",
        y = "Density")
 dev.off()
@@ -253,15 +252,23 @@ dev.off()
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterAlternativelySpliced_SE.pdf")
 ggplot(data_median_cluster_SE_AltSpl, aes(x = Median_Value)) +
   geom_density(fill = "slateblue3", alpha = 0.5) +
-  labs(title = "Density Plot of the Median Values of Cluster 'Alternatively Spliced - Skipped Exon'",
+  labs(title = "Density Plot of the Median Values of Cluster 'Alternatively Spliced - SE'",
        x = "PSI Values - Cluster 'Alternatively Spliced - Skipped Exon'",
        y = "Density")
 dev.off()
 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/histogram_median_clusterAlternativelySpliced_SE.pdf")
+ggplot(data_median_cluster_SE_AltSpl, aes(x = Median_Value)) +
+  geom_histogram(fill = "slateblue3", alpha = 0.5) +
+  labs(title = "Histogram of the Median Values of Cluster 'Alternatively Spliced - SE'",
+       x = "PSI Values - Cluster 'Alternatively Spliced - Skipped Exon'",
+       y = "Count")
+dev.off()
+
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterExcluded_SE.pdf")
 ggplot(data_median_cluster_SE_Excluded, aes(x = Median_Value)) +
-  geom_density(fill = "lightpink", alpha = 0.5) +
-  labs(title = "Density Plot of the Median PSI Values of Cluster 'Excluded - Skipped Exon'",
+  geom_density(fill = "lightpink") +
+  labs(title = "Density Plot of the Median PSI Values of Cluster 'Excluded - SE'",
        x = "PSI Values - Cluster 'Excluded - Skipped Exon'",
        y = "Density")
 dev.off()
@@ -292,16 +299,108 @@ sample_RI_2 <- histo_mat_RI[sample_RI_2_indices,]
 sample_RI_3 <- histo_mat_RI[sample_RI_3_indices,]
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_1_barplot.pdf")
-sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - Retained Intron'", xlab='Amount of Bin', width=1)})
+sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - RI'", xlab='Amount of Bin', width=1)})
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_2_barplot.pdf")
-sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Included  - Retained Intron'", xlab='Amount of Bin', width=1)})
+sample_RI_2_histo <- apply(sample_RI_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Included  - RI'", xlab='Amount of Bin', width=1)})
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_3_barplot.pdf")
-sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - Retained Intron'", xlab='Amount of Bin', width=1)}) 
+sample_RI_3_histo <- apply(sample_RI_3, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Excluded - RI'", xlab='Amount of Bin', width=1)}) 
 dev.off()
+
+# Quantification of the cluster
+cluster_RI_1_histo <- histo_mat_RI[cluster_RI_1_indices,]
+nrow(cluster_RI_1_histo)
+cluster_RI_2_histo <- histo_mat_RI[cluster_RI_2_indices,]
+nrow(cluster_RI_2_histo)
+cluster_RI_3_histo <- histo_mat_RI[cluster_RI_3_indices,]
+nrow(cluster_RI_3_histo)
+
+# Check if the data is equal -> no missing values etc. 
+combined_cluster_RI <- rbind(cluster_RI_1_histo, cluster_RI_2_histo, cluster_RI_3_histo)
+combined_RI_sorted <- combined_cluster_RI[order(rownames(combined_cluster_RI)), ]
+histo_mat_RI_sorted <- histo_mat_RI[order(rownames(histo_mat_RI)),]
+
+all.equal(combined_RI_sorted, histo_mat_RI_sorted) #TRUE -> uRI of cluster_RI_x_histo is verificated 
+
+# Calculate psi matrix for each cluster 
+psi_RI_AltSpl <- psi_RI[rownames(cluster_RI_1_histo),]
+nrow(psi_RI_Excluded)
+psi_RI_Included <- psi_RI[rownames(cluster_RI_2_histo),]
+psi_RI_Excluded <- psi_RI[rownames(cluster_RI_3_histo),]
+
+# Calculate the median for each event 
+median_cluster_RI_Included <- apply(psi_RI_Included, 1, median, na.rm=TRUE) #calculate the median (of psi value) for each event (each row)
+median_cluster_RI_AltSpl <- apply(psi_RI_AltSpl, 1, median, na.rm=TRUE)
+median_cluster_RI_Excluded <- apply(psi_RI_Excluded, 1, median, na.rm=TRUE)
+
+data_median_cluster_RI_Included <- data.frame(Median_Value = median_cluster_RI_Included)
+data_median_cluster_RI_AltSpl <- data.frame(Median_Value = median_cluster_RI_AltSpl)
+data_median_cluster_RI_Excluded <- data.frame(Median_Value = median_cluster_RI_Excluded)
+
+
+data_median_cluster_RI_Included <-  data_median_cluster_RI_Included[order(data_median_cluster_RI_Included$Median_Value),]
+quantile_RI_Included <- quantile(data_median_cluster_RI_Included, probs = seq(0, 1, 1/4))
+quantile_RI_Included
+
+data_median_cluster_RI_AltSpl <-  data_median_cluster_RI_AltSpl[order(data_median_cluster_RI_AltSpl$Median_Value),]
+quantile_RI_AltSpl <- quantile(data_median_cluster_RI_AltSpl, probs = seq(0, 1, 1/4))
+quantile_RI_AltSpl
+
+data_median_cluster_RI_Excluded <-  data_median_cluster_RI_Excluded[order(data_median_cluster_RI_Excluded$Median_Value),]
+quantile_RI_Excluded <- quantile(data_median_cluster_RI_Excluded, probs = seq(0, 1, 1/4))
+quantile_RI_Excluded 
+
+quantiles_RI <- data.frame(quantile_RI_Included, quantile_RI_AltSpl, quantile_RI_Excluded)
+col_names <- c("Included", "Alternatively Spliced", "Excluded")
+colnames(quantiles_RI) <- col_names
+
+library(knitr)
+library(kableExtra)
+
+table_quantiles_RI <- kable(quantiles_RI, format = "html", table.attr = "border=\"1\"", 
+                            caption = "Quantiles RI", align="ccc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+save_kable(x=table_quantiles_RI, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_table.html")
+
+
+# Create the density plot for the median values of each cluster 
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterIncluded_RI.pdf")
+ggplot(data_median_cluster_RI_Included, aes(x = Median_Value)) +
+  geom_density(fill = "skyblue3", alpha = 0.5) +
+  labs(title = "Density Plot of the Median Values of Cluster 'Included - RI'",
+       x = "PSI Values - Cluster 'Included - RI'",
+       y = "Density")
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterAlternativelySpliced_RI.pdf")
+ggplot(data_median_cluster_RI_AltSpl, aes(x = Median_Value)) +
+  geom_density(fill = "slateblue3", alpha = 0.5) +
+  labs(title = "Density Plot of the Median Values of Cluster 'Alternatively Spliced - RI'",
+       x = "PSI Values - Cluster 'Alternatively Spliced - RI'",
+       y = "Density")
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/histogram_median_clusterAlternativelySpliced_RI.pdf")
+ggplot(data_median_cluster_RI_AltSpl, aes(x = Median_Value)) +
+  geom_histogram(fill = "slateblue3", alpha = 0.5) +
+  labs(title = "Histogram of the Median Values of Cluster 'Alternatively Spliced - RI'",
+       x = "PSI Values - Cluster 'Alternatively Spliced - RI'",
+       y = "Count")
+dev.off()
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterExcluded_RI.pdf")
+ggplot(data_median_cluster_RI_Excluded, aes(x = Median_Value)) +
+  geom_density(fill = "lightpink", alpha=0.5) +
+  labs(title = "Density Plot of the Median PSI Values of Cluster 'Excluded - RI'",
+       x = "PSI Values - Cluster 'Excluded - RI'",
+       y = "Density")
+dev.off()
+
+
 ```
 
 # Visualization of k means clustering results
@@ -418,10 +517,10 @@ upper_triangle_mat_SE <- rbindlist(pbmcapply::pbmclapply(
     list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
   }, mc.cores=20
 ))
-
+combination
 upper_triangle_mat_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
 upper_triangle_mat_SE[, combination:=NULL]
-lower_triangle_mat_SE <- upper_triangle[, .(emd, from=to, to=from)]
+lower_triangle_mat_SE <- upper_triangle_mat_SE[, .(emd, from=to, to=from)]
 diagonal_mat_SE <- data.table(emd=0, from=events[, ID], to=events[, ID])
 
 emd_mat_SE <- rbindlist(list(upper_triangle_mat_SE, diagonal_mat_SE, lower_triangle_mat_SE))
@@ -434,23 +533,107 @@ plot(hclust(dist_SE))
 upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
   combn(histo_list_RI, 2, simplify=FALSE),
   function(k) {
+    list(combination=paste(names(k), collapse='*'), emd=emdC(k[[1]], k[[2]]))
+  }, mc.cores=20
+))
+library(reshape2)
+upper_triangle_mat_RI[, c('from', 'to') := tstrsplit(combination, "*", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_mat_RI[, combination:=NULL]
+lower_triangle_mat_RI <- upper_triangle_mat_RI[, .(emd, from=to, to=from)]
+diagonal_mat_RI <- data.table(emd=0, from=events[, ID], to=events[, ID])
+
+emd_mat_RI <- rbindlist(list(upper_triangle_mat_RI, diagonal_mat_RI, lower_triangle_mat_RI))
+dist_dt_RI <- dcast(emd_mat_RI, from ~ to, value.var = "emd")
+dist_dt_RI
+dist_RI <- as.dist(as.matrix(dist_dt_RI[, -"from"]))
+plot(hclust(dist_RI))
+```
+```{r}
+#RI
+combn(histo_list_RI, 2, simplify=FALSE)
+upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
+  function(k){
+    
+  }
+))
+                                   
+upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
+  combn(histo_list_RI, 2, simplify=FALSE),
+  function(k) {
     list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
   }, mc.cores=20
 ))
-
-upper_triangle_mat_RI[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
-upper_triangle_mat_RI[, combination:=NULL]
-lower_triangle_mat_RI <- upper_triangle[, .(emd, from=to, to=from)]
-diagonal_mat_RI <- data.table(emd=0, from=events[, ID], to=events[, ID])
-
-emd_mat_rI <- rbindlist(list(upper_triangle_mat_RI, diagonal_mat_RI, lower_triangle_mat_RI))
-dist_dt_RI <- dcast(emd_mat_RI, from ~ to, value.var = "emd")
-dist_RI <- as.dist(as.matrix(dist_dt_RI[, -"from"]))
-plot(hclust(dist_RI))
 ```
 
 # 6. Hierarchical clustering for the emd matrix
 ```{r}
 TODO
 ```
+
+```{r}
+#Quirin:
+ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
+na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
+events <- events[na_per_row < length(ihecs)]
+events_filtered_SE <- events[grepl("SE", events$event_id), ]
+n_bins <- 50
+my_breaks <- seq(0,1,length.out=n_bins+1)
+psi_mat_SE <- as.matrix(events[, ..ihecs])
+dens_list_SE <- apply(psi_mat_SE, 1, function(x) {
+  x <- x[!is.na(x)]
+  dens <- hist(x, breaks = my_breaks, plot = FALSE)$density
+  dens/sum(dens)
+}, simplify = FALSE)
+names(dens_list_SE) <- as.character(events_filtered_SE[, as.character(ID)])
+
+upper_triangle_SE <- rbindlist(pbmcapply::pbmclapply(
+  combn(dens_list_SE, 2, simplify = FALSE), 
+  function(l) {
+    list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
+  }, mc.cores=20
+  ))
+upper_triangle_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_SE[, combination:=NULL] 
+lower_triangle_SE <- upper_triangle_SE[, .(emd, from=to, to=from)]
+diagonal_SE <- data.table(emd=0, from=events_filtered_SE[, ID], to=events_filtered_SE[, ID])
+emd_mat_SE <- rbindlist(list(upper_triangle_SE, diagonal_SE, lower_triangle_SE))
+View(emd_mat_SE)
+dist_dt_SE <- dcast(emd_mat_SE, from ~ to, value.var = "emd")
+dist <- as.dist(as.matrix(dist_dt[, -"from"]))
+plot(hclust(dist))
+```
+
+```{r}
+ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
+na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
+events <- events[na_per_row < length(ihecs)]
+n_bins <- 50
+my_breaks <- seq(0,1,length.out=n_bins+1)
+psi_mat <- as.matrix(events[, ..ihecs])
+dens_list <- apply(psi_mat, 1, function(x) {
+  x <- x[!is.na(x)]
+  dens <- hist(x, breaks = my_breaks, plot = FALSE)$density
+  dens/sum(dens)
+}, simplify = FALSE)
+names(dens_list) <- as.character(events[, as.character(ID)])
+```
+
+```{r}
+upper_triangle <- rbindlist(pbmcapply::pbmclapply(
+  combn(dens_list, 2, simplify = FALSE), 
+  function(l) {
+    list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
+  }))
+upper_triangle[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle[, combination:=NULL]
+lower_triangle <- upper_triangle[, .(emd, from=to, to=from)]
+diagonal <- data.table(emd=0, from=events[, ID], to=events[, ID])
+emd_mat <- rbindlist(list(upper_triangle, diagonal, lower_triangle))
+dist_dt <- dcast(emd_mat, from ~ to, value.var = "emd")
+dim(dist_dt)
+dist <- as.dist(as.matrix(dist_dt[, -"from"]))
+dist <- as.dist(as.matrix(dist_dt))
+plot(hclust(dist))
+```
+
 
