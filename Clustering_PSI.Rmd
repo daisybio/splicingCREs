@@ -32,6 +32,8 @@ library(sqldf)
 library(tidyverse)
 library('factoextra')
 library(stats)
+library(knitr)
+library(kableExtra)
 Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
   int n = a.size();
   NumericVector dist = NumericVector(n);
@@ -203,7 +205,7 @@ sample_SE_1_histo <- apply(sample_SE_1, 1, function(x) {
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_2_barplot.pdf")
-sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - SE'", xlab='Amount of Bins', width=1)}) 
+sample_SE_2_histo <- apply(sample_SE_2, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - SE'", xlab='Amount of Bins', ylab='Frequency', width=1)}) 
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_SE_3_barplot.pdf")
@@ -236,9 +238,28 @@ data_median_cluster_SE_Included <- data.frame(Median_Value = median_cluster_SE_I
 data_median_cluster_SE_AltSpl <- data.frame(Median_Value = median_cluster_SE_AltSpl)
 data_median_cluster_SE_Excluded <- data.frame(Median_Value = median_cluster_SE_Excluded)
 
+data_median_cluster_SE_Included <-  data_median_cluster_SE_Included[order(data_median_cluster_SE_Included$Median_Value),]
+quantile_SE_Included <- quantile(data_median_cluster_SE_Included, probs = seq(0, 1, 1/4))
+quantile_SE_Included
+
 data_median_cluster_SE_AltSpl <-  data_median_cluster_SE_AltSpl[order(data_median_cluster_SE_AltSpl$Median_Value),]
 quantile_SE_AltSpl <- quantile(data_median_cluster_SE_AltSpl, probs = seq(0, 1, 1/4))
 quantile_SE_AltSpl
+
+data_median_cluster_SE_Excluded <-  data_median_cluster_SE_Excluded[order(data_median_cluster_SE_Excluded$Median_Value),]
+quantile_SE_Excluded <- quantile(data_median_cluster_SE_Excluded, probs = seq(0, 1, 1/4))
+quantile_SE_Excluded 
+
+quantiles_SE <- data.frame(quantile_SE_Included, quantile_SE_AltSpl, quantile_SE_Excluded)
+col_names <- c("Included", "Alternatively Spliced", "Excluded")
+colnames(quantiles_SE) <- col_names
+
+table_quantiles_SE <- kable(quantiles_SE, format = "html", table.attr = "border=\"1\"", 
+                            caption = "Quantiles SE", align="ccc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+save_kable(x=table_quantiles_SE, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE.html")
+
 
 # Create the density plot for the median values of each cluster 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/density_median_clusterIncluded_SE.pdf")
@@ -299,7 +320,7 @@ sample_RI_2 <- histo_mat_RI[sample_RI_2_indices,]
 sample_RI_3 <- histo_mat_RI[sample_RI_3_indices,]
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_1_barplot.pdf")
-sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - RI'", xlab='Amount of Bin', width=1)})
+sample_RI_1_histo <- apply(sample_RI_1, 1, function(x) {barplot(x, plot = TRUE, main="Random event of cluster 'Alternatively Spliced - RI'", xlab='Amount of Bin', ylab='Frequency', width=1)})
 dev.off()
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/sample_RI_2_barplot.pdf")
@@ -357,14 +378,11 @@ quantiles_RI <- data.frame(quantile_RI_Included, quantile_RI_AltSpl, quantile_RI
 col_names <- c("Included", "Alternatively Spliced", "Excluded")
 colnames(quantiles_RI) <- col_names
 
-library(knitr)
-library(kableExtra)
-
 table_quantiles_RI <- kable(quantiles_RI, format = "html", table.attr = "border=\"1\"", 
                             caption = "Quantiles RI", align="ccc") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 
-save_kable(x=table_quantiles_RI, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_table.html")
+save_kable(x=table_quantiles_RI, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI.html")
 
 
 # Create the density plot for the median values of each cluster 
@@ -570,40 +588,11 @@ upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
 TODO
 ```
 
-```{r}
-#Quirin:
-ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
-na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
-events <- events[na_per_row < length(ihecs)]
-events_filtered_SE <- events[grepl("SE", events$event_id), ]
-n_bins <- 50
-my_breaks <- seq(0,1,length.out=n_bins+1)
-psi_mat_SE <- as.matrix(events[, ..ihecs])
-dens_list_SE <- apply(psi_mat_SE, 1, function(x) {
-  x <- x[!is.na(x)]
-  dens <- hist(x, breaks = my_breaks, plot = FALSE)$density
-  dens/sum(dens)
-}, simplify = FALSE)
-names(dens_list_SE) <- as.character(events_filtered_SE[, as.character(ID)])
 
-upper_triangle_SE <- rbindlist(pbmcapply::pbmclapply(
-  combn(dens_list_SE, 2, simplify = FALSE), 
-  function(l) {
-    list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
-  }, mc.cores=20
-  ))
-upper_triangle_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
-upper_triangle_SE[, combination:=NULL] 
-lower_triangle_SE <- upper_triangle_SE[, .(emd, from=to, to=from)]
-diagonal_SE <- data.table(emd=0, from=events_filtered_SE[, ID], to=events_filtered_SE[, ID])
-emd_mat_SE <- rbindlist(list(upper_triangle_SE, diagonal_SE, lower_triangle_SE))
-View(emd_mat_SE)
-dist_dt_SE <- dcast(emd_mat_SE, from ~ to, value.var = "emd")
-dist <- as.dist(as.matrix(dist_dt[, -"from"]))
-plot(hclust(dist))
-```
+```{r} 
+#Quirin
+events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 
-```{r}
 ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
 na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
 events <- events[na_per_row < length(ihecs)]
