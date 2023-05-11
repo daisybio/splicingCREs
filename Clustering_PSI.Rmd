@@ -529,25 +529,15 @@ dev.off()
 
 ```{r}
 # function: pbmclapply -> it is a wrapper around the mclapply function & it adds a progress bar to mclapply function
-upper_triangle_mat_SE <- rbindlist(pbmcapply::pbmclapply(
-  combn(histo_list_SE, 2, simplify=FALSE),
-  function(k) {
-    list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
-  }, mc.cores=20
-))
-combination
-upper_triangle_mat_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
-upper_triangle_mat_SE[, combination:=NULL]
-lower_triangle_mat_SE <- upper_triangle_mat_SE[, .(emd, from=to, to=from)]
-diagonal_mat_SE <- data.table(emd=0, from=events[, ID], to=events[, ID])
 
-emd_mat_SE <- rbindlist(list(upper_triangle_mat_SE, diagonal_mat_SE, lower_triangle_mat_SE))
-dist_dt_SE <- dcast(emd_mat_SE, from ~ to, value.var = "emd")
-dist_SE <- as.dist(as.matrix(dist_dt_SE[, -"from"]))
-plot(hclust(dist_SE))
+```
 
-#RI
+# 6. Hierarchical clustering for the emd matrix
+```{r}
+TODO
+```
 
+```{r}
 upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
   combn(histo_list_RI, 2, simplify=FALSE),
   function(k) {
@@ -558,34 +548,14 @@ library(reshape2)
 upper_triangle_mat_RI[, c('from', 'to') := tstrsplit(combination, "*", fixed=TRUE, type.convert = TRUE)]
 upper_triangle_mat_RI[, combination:=NULL]
 lower_triangle_mat_RI <- upper_triangle_mat_RI[, .(emd, from=to, to=from)]
-diagonal_mat_RI <- data.table(emd=0, from=events[, ID], to=events[, ID])
+diagonal_mat_RI <- data.table(emd=0, from=events[, event_id], to=events[, event_id])
 
 emd_mat_RI <- rbindlist(list(upper_triangle_mat_RI, diagonal_mat_RI, lower_triangle_mat_RI))
-dist_dt_RI <- dcast(emd_mat_RI, from ~ to, value.var = "emd")
-dist_dt_RI
-dist_RI <- as.dist(as.matrix(dist_dt_RI[, -"from"]))
+dist_dt_RI <- data.table::dcast(emd_mat_RI, from ~ to, value.var = "emd")
+dim(dist_dt_RI)
+dist_dt_RI <- dist_dt_RI[, -"from"]
+dist_RI <- as.dist(dist_dt_RI)
 plot(hclust(dist_RI))
-```
-```{r}
-#RI
-combn(histo_list_RI, 2, simplify=FALSE)
-upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
-  function(k){
-    
-  }
-))
-                                   
-upper_triangle_mat_RI <- rbindlist(pbmcapply::pbmclapply(
-  combn(histo_list_RI, 2, simplify=FALSE),
-  function(k) {
-    list(combination=paste(names(k), collapse='-'), emd=emdC(k[[1]], k[[2]]))
-  }, mc.cores=20
-))
-```
-
-# 6. Hierarchical clustering for the emd matrix
-```{r}
-TODO
 ```
 
 
@@ -618,11 +588,51 @@ upper_triangle[, combination:=NULL]
 lower_triangle <- upper_triangle[, .(emd, from=to, to=from)]
 diagonal <- data.table(emd=0, from=events[, ID], to=events[, ID])
 emd_mat <- rbindlist(list(upper_triangle, diagonal, lower_triangle))
-dist_dt <- dcast(emd_mat, from ~ to, value.var = "emd")
+dist_dt <-  data.table::dcast(emd_mat, from ~ to, value.var = "emd")
 dim(dist_dt)
 dist <- as.dist(as.matrix(dist_dt[, -"from"]))
 dist <- as.dist(as.matrix(dist_dt))
 plot(hclust(dist))
 ```
 
+```{r}
+#Quirin - SE 
+events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
+
+ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
+na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
+events <- events[na_per_row < length(ihecs)]
+events_subset_SE <- events[grep("SE", events$event_id), ]
+n_bins <- 50
+my_breaks <- seq(0,1,length.out=n_bins+1)
+psi_mat_SE <- as.matrix(events_subset_SE[, ..ihecs])
+dens_list_SE <- apply(psi_mat_SE, 1, function(x) {
+  x <- x[!is.na(x)]
+  dens <- hist(x, breaks = my_breaks, plot = FALSE)$density
+  dens/sum(dens)
+}, simplify = FALSE)
+names(dens_list_SE) <- as.character(events_subset_SE[, as.character(ID)])
+```
+
+```{r}
+upper_triangle_SE <- rbindlist(pbmcapply::pbmclapply(
+  combn(dens_list_SE, 2, simplify = FALSE), 
+  function(l) {
+    list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
+  }))
+upper_triangle_SE <- rbindlist(pbmcapply::pbmclapply(
+  combn(dens_list_SE, 2, simplify = FALSE), 
+  function(l) {
+    list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
+  }, mc.cores=20))
+upper_triangle_SE[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_SE[, combination:=NULL]
+lower_triangle_SE <- upper_triangle_SE[, .(emd, from=to, to=from)]
+diagonal_SE <- data.table(emd=0, from=events_subset_SE[, ID], to=events_subset_SE[, ID])
+emd_mat_SE <- rbindlist(list(upper_triangle_SE, diagonal_SE, lower_triangle_SE))
+dist_dt_SE <-  data.table::dcast(emd_mat_SE, from ~ to, value.var = "emd")
+dim(dist_dt_SE)
+dist_SE <- as.dist(as.matrix(dist_dt_SE[, -"from"]))
+dist_SE <- as.dist(as.matrix(dist_dt_SE))
+plot(hclust(dist_SE))
 
