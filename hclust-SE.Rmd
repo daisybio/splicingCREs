@@ -38,50 +38,50 @@ events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
 na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
 events <- events[na_per_row < length(ihecs)]
-events <- events[grep("SE", events$event_id), ] #only look at the Skipped Exon (SE) events 
+events_SE_hclust <- events[grep("SE", events$event_id), ] #only look at the Skipped Exon (SE) events 
 n_bins <- 50
 my_breaks <- seq(0,1,length.out=n_bins+1)
-psi_mat <- as.matrix(events[, ..ihecs])
-dens_list <- apply(psi_mat, 1, function(x) {
+psi_mat_SE_hclust <- as.matrix(events_SE_hclust[, ..ihecs])
+dens_list_SE_hclust <- apply(psi_mat_SE_hclust, 1, function(x) {
   x <- x[!is.na(x)]
   dens <- hist(x, breaks = my_breaks, plot = FALSE)$density
   dens/sum(dens)
 }, simplify = FALSE)
-names(dens_list) <- as.character(events[, as.character(ID)])
+names(dens_list_SE_hclust) <- as.character(events_SE_hclust[, as.character(ID)])
 ```
 
 ```{r}
 #Calculate the emd matrix for the SE events 
-upper_triangle <- rbindlist(pbmcapply::pbmclapply(
-  combn(dens_list, 2, simplify = FALSE), 
+upper_triangle_SE_hclust <- rbindlist(pbmcapply::pbmclapply(
+  combn(dens_list_SE_hclust, 2, simplify = FALSE), 
   function(l) {
     list(combination = paste(names(l), collapse = "-"), emd=emdC(l[[1]], l[[2]]))
   }, mc.cores=20))
-upper_triangle[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
-upper_triangle[, combination:=NULL]
-lower_triangle <- upper_triangle[, .(emd, from=to, to=from)]
-diagonal <- data.table(emd=0, from=events[, ID], to=events[, ID])
-emd_mat <- rbindlist(list(upper_triangle, diagonal, lower_triangle))
-dist_dt <-  data.table::dcast(emd_mat, from ~ to, value.var = "emd")
-dist_dt <- dist_dt[, -"from"]
-dim(dist_dt)
-dist <- as.dist(as.matrix(dist_dt))
-hclust_result <- hclust(dist)
+upper_triangle_SE_hclust[, c('from', 'to') := tstrsplit(combination, "-", fixed=TRUE, type.convert = TRUE)]
+upper_triangle_SE_hclust[, combination:=NULL]
+lower_triangle_SE_hclust <- upper_triangle_SE_hclust[, .(emd, from=to, to=from)]
+diagonal_SE_hclust <- data.table(emd=0, from=events_SE_hclust[, ID], to=events_SE_hclust[, ID])
+emd_mat_SE <- rbindlist(list(upper_triangle_SE_hclust, diagonal_SE_hclust, lower_triangle_SE_hclust))
+dist_dt_SE <-  data.table::dcast(emd_mat_SE, from ~ to, value.var = "emd")
+dist_dt_SE <- dist_dt_SE[, -"from"]
+dim(dist_dt_SE)
+dist_SE <- as.dist(as.matrix(dist_dt_SE))
+hclust_result_SE <- hclust(dist_SE)
 
 #TODO: create plot for dendrogram (3 main branches)
 
 # Cut the tree into three branches
-cutree_result <- cutree(hclust_result, k = num_branches)
+cutree_result_SE <- cutree(hclust_result_SE, k = num_branches)
 # Plot the dendrogram with three branches
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_SE.pdf")
-plot(hclust_result, hang = -1, main = "Dendrogram Skipped Exon", labels = FALSE, xlab = "Distance")
-rect.hclust(hclust_result, k = 3, border = "blue")
+plot(hclust_result_SE, hang = -1, main = "Dendrogram Skipped Exon", labels = FALSE, xlab = "Distance")
+rect.hclust(hclust_result_SE, k = 3, border = "blue")
 dev.off()
 
 
-assigned_clusters <- cutree(hclust_result, k = 3)
-clusters_df_SE <- data.frame(events, cluster = assigned_clusters)
+assigned_clusters_SE <- cutree(hclust_result_SE, k = 3)
+clusters_df_SE <- data.frame(events_SE_hclust, cluster = assigned_clusters_SE)
 rownames(clusters_df_SE) <- clusters_df_SE$event_id
 
 #Look at the intersection between hclust cluster and kmeans cluster 
@@ -90,23 +90,23 @@ cluster_SE_1_indices_hclust <- which(clusters_df_SE[["cluster"]] == 1)
 cluster_SE_2_indices_hclust <- which(clusters_df_SE[["cluster"]] == 2)
 cluster_SE_3_indices_hclust <- which(clusters_df_SE[["cluster"]] == 3)
 
-events <- as.data.frame(events)
-events <- events %>% column_to_rownames(var="event_id")
+events_SE_hclust <- as.data.frame(events_SE_hclust)
+events_SE_hclust <- events_SE_hclust %>% column_to_rownames(var="event_id")
 
-cluster_SE_1_histo_hclust <- events[cluster_SE_1_indices_hclust,ihecs]
-cluster_SE_2_histo_hclust <- events[cluster_SE_2_indices_hclust,ihecs]
-cluster_SE_3_histo_hclust <- events[cluster_SE_3_indices_hclust,ihecs]
+cluster_SE_1_histo_hclust <- events_SE_hclust[cluster_SE_1_indices_hclust,ihecs]
+cluster_SE_2_histo_hclust <- events_SE_hclust[cluster_SE_2_indices_hclust,ihecs]
+cluster_SE_3_histo_hclust <- events_SE_hclust[cluster_SE_3_indices_hclust,ihecs]
 
-#rownames(cluster_SE_1_histo_hclust) <- as.character(events[as.character(event_id),])
+#rownames(cluster_SE_1_histo_hclust) <- as.character(events_SE_hclust[as.character(event_id),])
 # Calculate psi matrix for each cluster 
 
-psi_mat_SE_hclust <- as.matrix(events[, ihecs])
+psi_mat_SE_hclust <- as.matrix(events_SE_hclust[, ihecs])
 
 psi_SE_1_hclust <- psi_mat_SE_hclust[rownames(clusters_df_SE[cluster_SE_1_indices_hclust, ]),]
 psi_SE_2_hclust <- psi_mat_SE_hclust[rownames(clusters_df_SE[cluster_SE_2_indices_hclust, ]),]
 psi_SE_3_hclust <- psi_mat_SE_hclust[rownames(clusters_df_SE[cluster_SE_3_indices_hclust, ]),]
 
-#check number -> should be equal to dim of events (for Skipped Exon)
+#check number -> should be equal to dim of events_SE_hclust (for Skipped Exon)
 nrow(psi_SE_1_hclust) + nrow(psi_SE_2_hclust) + nrow(psi_SE_3_hclust)
 all <- rbind(psi_SE_1_hclust, psi_SE_2_hclust, psi_SE_3_hclust)
 # Count the number of non-missing rows in the merged data frame
@@ -116,9 +116,9 @@ all <- rbind(psi_SE_1_hclust, psi_SE_2_hclust, psi_SE_3_hclust)
 #common_row_names <- intersect(rownames_all, rownames_psi_SE_Included)
 
 
-rownames_psi_SE_Included <- rownames(psi_SE_Included)
-rownames_psi_SE_Excluded <- rownames(psi_SE_Excluded)
-rownames_psi_SE_AltSpl <- rownames(psi_SE_AltSpl)
+rownames_psi_SE_Included <- rownames(psi_SE_Included) #kmeans
+rownames_psi_SE_Excluded <- rownames(psi_SE_Excluded) #kmeans
+rownames_psi_SE_AltSpl <- rownames(psi_SE_AltSpl) #kmeans
 
 
 psi_SE_1_hclust <- as.data.frame(psi_SE_1_hclust)
@@ -155,40 +155,99 @@ common_row_names <- intersect(rownames_SE_3_hclust, rownames_psi_SE_AltSpl)
 length(common_row_names)
 
 
-
-
-
-
-
 # Calculate the median for each event 
-median_cluster_SE_1 <- apply(psi_SE_1_hclust, 1, median, na.rm=TRUE) #calculate the median (of psi value) for each event (each row)
-median_cluster_SE_2 <- apply(psi_SE_2_hclust, 1, median, na.rm=TRUE)
-median_cluster_SE_3 <- apply(psi_SE_3_hclust, 1, median, na.rm=TRUE)
+median_cluster_SE_1_hclust <- apply(psi_SE_1_hclust, 1, median, na.rm=TRUE) #calculate the median (of psi value) for each event (each row)
+median_cluster_SE_2_hclust <- apply(psi_SE_2_hclust, 1, median, na.rm=TRUE)
+median_cluster_SE_3_hclust <- apply(psi_SE_3_hclust, 1, median, na.rm=TRUE)
 
-data_median_cluster_SE_1 <- data.frame(Median_Value = median_cluster_SE_1)
-data_median_cluster_SE_2 <- data.frame(Median_Value = median_cluster_SE_2)
-data_median_cluster_SE_3 <- data.frame(Median_Value = median_cluster_SE_3)
+data_median_cluster_SE_1_hclust <- data.frame(Median_Value = median_cluster_SE_1_hclust)
+data_median_cluster_SE_2_hclust <- data.frame(Median_Value = median_cluster_SE_2_hclust)
+data_median_cluster_SE_3_hclust <- data.frame(Median_Value = median_cluster_SE_3_hclust)
 
-data_median_cluster_SE_1 <-  data_median_cluster_SE_1[order(data_median_cluster_SE_1$Median_Value),]
-quantile_SE_1 <- quantile(data_median_cluster_SE_1, probs = seq(0, 1, 1/4))
-quantile_SE_1
+data_median_cluster_SE_1_hclust <-  data_median_cluster_SE_1_hclust[order(data_median_cluster_SE_1_hclust$Median_Value),]
+quantile_SE_1_hclust <- quantile(data_median_cluster_SE_1_hclust, probs = seq(0, 1, 1/4))
+quantile_SE_1_hclust
 
-data_median_cluster_SE_2 <-  data_median_cluster_SE_2[order(data_median_cluster_SE_2$Median_Value),]
-quantile_SE_2 <- quantile(data_median_cluster_SE_2, probs = seq(0, 1, 1/4))
-quantile_SE_2
+data_median_cluster_SE_2_hclust <-  data_median_cluster_SE_2_hclust[order(data_median_cluster_SE_2_hclust$Median_Value),]
+quantile_SE_2_hclust <- quantile(data_median_cluster_SE_2_hclust, probs = seq(0, 1, 1/4))
+quantile_SE_2_hclust
 
-data_median_cluster_SE_3 <-  data_median_cluster_SE_3[order(data_median_cluster_SE_3$Median_Value),]
-quantile_SE_3 <- quantile(data_median_cluster_SE_3, probs = seq(0, 1, 1/4))
-quantile_SE_3 
+data_median_cluster_SE_3_hclust <-  data_median_cluster_SE_3_hclust[order(data_median_cluster_SE_3_hclust$Median_Value),]
+quantile_SE_3_hclust <- quantile(data_median_cluster_SE_3_hclust, probs = seq(0, 1, 1/4))
+quantile_SE_3_hclust
 
-quantiles_SE_hclust <- data.frame(quantile_SE_1, quantile_SE_2, quantile_SE_3)
-col_names <- c("1", "2", "3")
-colnames(quantiles_SE_hclust) <- col_names
+#cluster 1 -> Alternitavely Spliced
+#cluster 2 -> Included
+#cluster 3 -> Excluded 
+quantiles_SE_hclust <- data.frame(quantile_SE_3_hclust, quantile_SE_1_hclust, quantile_SE_2_hclust)
+col_names_SE_hclust <- c("Excluded - SE", "Alternitavely Spliced - SE", "Included - SE")
+colnames(quantiles_SE_hclust) <- col_names_SE_hclust
 quantiles_SE_hclust
-table_quantiles_SE_hclust <- kable(quantiles_SE, format = "html", table.attr = "border=\"1\"", 
+table_quantiles_SE_hclust <- kable(quantiles_SE_hclust, format = "html", table.attr = "border=\"1\"", 
                             caption = "Quantiles SE - hierarchical clustering", align="ccc") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
+table_quantiles_SE_hclust
+save_kable(x=table_quantiles_SE_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE_hclust.html")
 
-save_kable(x=table_quantiles_SE, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE_hclust.html")
+```
 
+# combine quantiles (SE and RI) to see both in one table
+```{r}
+#quantiles_SE_hclust <- data.frame(quantile_SE_3_hclust, quantile_SE_1_hclust, quantile_SE_2_hclust)
+#quantiles_RI_hclust <- data.frame(quantile_RI_2_hclust, quantile_RI_3_hclust, quantile_RI_1_hclust)
+
+#cluster 2 - RI-> Excluded
+#cluster 3 - SE-> Excluded 
+
+#cluster 3 - RI -> Alternatively Spliced 
+#cluster 1 - SE -> Alternitavely Spliced
+
+#cluster 1 - RI -> Included
+#cluster 2 - SE-> Included
+
+quantiles_RI_SE <- cbind.data.frame(round(quantile_RI_2_hclust, 2), round(quantile_SE_3_hclust, 2), round(quantile_RI_3_hclust, 2), round(quantile_SE_1_hclust, 2), round(quantile_RI_1_hclust, 2), round(quantile_SE_2_hclust, 2))
+col_names_RI_SE <- c(ex_RI, ex_SE, alt_RI, alt_SE, in_RI, in_SE)
+
+in_SE <- sprintf("Included - SE - %d/%d events", nrow(psi_SE_2_hclust), nrow(events_SE_hclust))
+in_RI <- sprintf("Included - RI - %d/%d events", nrow(psi_RI_1_hclust), nrow(events_RI_hclust))
+
+alt_SE <- sprintf("Alternitavely Spliced - SE - %d/%d events", nrow(psi_SE_1_hclust), nrow(events_SE_hclust))
+alt_RI <- sprintf("Alternitavely Spliced - RI - %d/%d events", nrow(psi_RI_3_hclust), nrow(events_RI_hclust))
+
+ex_SE <- sprintf("Excluded - SE - %d/%d events", nrow(psi_SE_3_hclust), nrow(events_SE_hclust))
+ex_RI <- sprintf("Excluded - RI - %d/%d events", nrow(psi_RI_2_hclust), nrow(events_SE_hclust))
+
+
+
+colnames(quantiles_RI_SE) <- col_names_RI_SE
+quantiles_RI_SE
+table_quantiles_RI_SE_hclust <- kable(quantiles_RI_SE, format = "html", table.attr = "border=\"1\"", 
+                            caption = "Quantiles RI and SE - hierarchical clustering", align="ccc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+table_quantiles_RI_SE_hclust
+save_kable(x=table_quantiles_RI_SE_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_SE_hclust.html")
+
+```
+
+
+#Having a further look on cluster 1 -> Alternatively Spliced 
+```{r}
+# Extract the third branch because cluster 3 -> Alternatively Spliced 
+# Already done above:
+subcluster_SE_1_hclust <- which(cutree_result_SE == 1)
+subcluster_SE_1_hclust <- as.data.frame(subcluster_SE_1_hclust)
+#nrow(subcluster_SE_1_hclust)
+colnames_dist_dt_SE_1 <- c(rownames(subcluster_SE_1_hclust))
+dist_dt_SE_1 <- dist_dt_SE[subcluster_SE_1_hclust$subcluster_SE_1_hclust,..colnames_dist_dt_SE_1]
+#dim(dist_dt_SE_1)
+
+dist_SE_1 <- as.dist(as.matrix(dist_dt_SE_1))
+hclust_result_SE_1 <- hclust(dist_SE_1)
+
+plot(hclust_result_SE_1, label=FALSE)
+
+pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_SE_AltSpl.pdf")
+plot(hclust_result_SE_1, hang = -1, main = "Dendrogram Skipped Exon - only Alternatively Spliced Branch", labels = FALSE, xlab = "Distance")
+rect.hclust(hclust_result_SE_1, k = 6, border = "blue")
+dev.off()
 ```
