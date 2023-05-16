@@ -38,7 +38,8 @@ events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
 na_per_row <- apply(events[, ..ihecs], 1, function(x) sum(is.na(x)))
 events <- events[na_per_row < length(ihecs)]
-events_RI_hclust <- events[grep("RI", events$event_id), ] #only look at the Retained Intron (RI) events 
+events_RI_hclust <- events[grep("RI", events$event_id), ] #only look at the Retained Intron (RI) events
+#dim(events_RI_hclust)
 n_bins <- 50
 my_breaks <- seq(0,1,length.out=n_bins+1)
 psi_mat_RI_hclust <- as.matrix(events_RI_hclust[, ..ihecs])
@@ -68,10 +69,7 @@ dim(dist_dt_RI)
 dist_RI <- as.dist(as.matrix(dist_dt_RI))
 hclust_result_RI <- hclust(dist_RI)
 
-# Cut the tree into three branches
-cutree_result_RI <- cutree(hclust_result_RI, k = num_branches)
 # Plot the dendrogram with three branches
-
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_RI.pdf")
 plot(hclust_result_RI, hang = -1, main = "Dendrogram Retained Intron", labels = FALSE, xlab = "Distance")
 rect.hclust(hclust_result_RI, k = 3, border = "lightpink")
@@ -206,6 +204,106 @@ plot(hclust_result_RI_3, hang = -1, main = "Dendrogram Retained Intron - only Al
 rect.hclust(hclust_result_RI_3, k = 6, border = "lightpink")
 dev.off()
 
+```
+```{r}
+assigned_clusters_RI_AltSpl <- cutree(hclust_result_RI_3, k = 6)
+events_RI_hclust_AltSpl <- events_RI_hclust[cluster_RI_3_indices_hclust,]
+#nrow(events_RI_hclust_AltSpl)
+clusters_df_RI_AltSpl <- data.frame(events_RI_hclust_AltSpl, cluster = assigned_clusters_RI_AltSpl)
+rownames(clusters_df_RI_AltSpl) <- rownames(events_RI_hclust_AltSpl)
+
+ 
+cluster_RI_AS_1_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 1)
+cluster_RI_AS_2_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 2)
+cluster_RI_AS_3_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 3)
+cluster_RI_AS_4_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 4)
+cluster_RI_AS_5_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 5)
+cluster_RI_AS_6_indices_hclust <- which(clusters_df_RI_AltSpl[["cluster"]] == 6)
+
+cluster_RI_AS_1_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_1_indices_hclust,ihecs]
+cluster_RI_AS_2_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_2_indices_hclust,ihecs]
+cluster_RI_AS_3_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_3_indices_hclust,ihecs]
+cluster_RI_AS_4_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_4_indices_hclust,ihecs]
+cluster_RI_AS_5_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_5_indices_hclust,ihecs]
+cluster_RI_AS_6_histo_hclust <- events_RI_hclust_AltSpl[cluster_RI_AS_6_indices_hclust,ihecs]
+
+# Calculate psi matrix for each cluster 
+
+psi_mat_RI_AS_hclust <- as.matrix(events_RI_hclust_AltSpl[, ihecs])
+
+psi_RI_AS_1_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_1_indices_hclust, ]),]
+psi_RI_AS_2_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_2_indices_hclust, ]),]
+psi_RI_AS_3_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_3_indices_hclust, ]),]
+psi_RI_AS_4_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_4_indices_hclust, ]),]
+psi_RI_AS_5_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_5_indices_hclust, ]),]
+psi_RI_AS_6_hclust <- psi_mat_RI_hclust[rownames(clusters_df_RI_AltSpl[cluster_RI_AS_6_indices_hclust, ]),]
+
+#check number -> should be equal to dim of events_RI_hclust_AltSpl (for Skipped Exon)
+nrow(psi_RI_AS_1_hclust) + nrow(psi_RI_AS_2_hclust) + nrow(psi_RI_AS_3_hclust) + nrow(psi_RI_AS_4_hclust) + nrow(psi_RI_AS_5_hclust) + nrow(psi_RI_AS_6_hclust)
+dim(events_RI_hclust_AltSpl)
+
+# Calculate the median for each event 
+median_cluster_RI_AS_1_hclust <- apply(psi_RI_AS_1_hclust, 1, median, na.rm=TRUE) #calculate the median (of psi value) for each event (each row)
+median_cluster_RI_AS_2_hclust <- apply(psi_RI_AS_2_hclust, 1, median, na.rm=TRUE)
+median_cluster_RI_AS_3_hclust <- apply(psi_RI_AS_3_hclust, 1, median, na.rm=TRUE)
+median_cluster_RI_AS_4_hclust <- apply(psi_RI_AS_4_hclust, 1, median, na.rm=TRUE)
+median_cluster_RI_AS_5_hclust <- apply(psi_RI_AS_5_hclust, 1, median, na.rm=TRUE)
+median_cluster_RI_AS_6_hclust <- apply(psi_RI_AS_6_hclust, 1, median, na.rm=TRUE)
+
+
+data_median_cluster_RI_AS_1_hclust <- data.frame(Median_Value = median_cluster_RI_AS_1_hclust)
+data_median_cluster_RI_AS_2_hclust <- data.frame(Median_Value = median_cluster_RI_AS_2_hclust)
+data_median_cluster_RI_AS_3_hclust <- data.frame(Median_Value = median_cluster_RI_AS_3_hclust)
+data_median_cluster_RI_AS_4_hclust <- data.frame(Median_Value = median_cluster_RI_AS_4_hclust)
+data_median_cluster_RI_AS_5_hclust <- data.frame(Median_Value = median_cluster_RI_AS_5_hclust)
+data_median_cluster_RI_AS_6_hclust <- data.frame(Median_Value = median_cluster_RI_AS_6_hclust)
+
+data_median_cluster_RI_AS_1_hclust <-  data_median_cluster_RI_AS_1_hclust[order(data_median_cluster_RI_AS_1_hclust$Median_Value),]
+quantile_RI_AS_1_hclust <- quantile(data_median_cluster_RI_AS_1_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_1_hclust
+
+data_median_cluster_RI_AS_2_hclust <-  data_median_cluster_RI_AS_2_hclust[order(data_median_cluster_RI_AS_2_hclust$Median_Value),]
+quantile_RI_AS_2_hclust <- quantile(data_median_cluster_RI_AS_2_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_2_hclust
+
+data_median_cluster_RI_AS_3_hclust <-  data_median_cluster_RI_AS_3_hclust[order(data_median_cluster_RI_AS_3_hclust$Median_Value),]
+quantile_RI_AS_3_hclust <- quantile(data_median_cluster_RI_AS_3_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_3_hclust
+
+data_median_cluster_RI_AS_4_hclust <-  data_median_cluster_RI_AS_4_hclust[order(data_median_cluster_RI_AS_4_hclust$Median_Value),]
+quantile_RI_AS_4_hclust <- quantile(data_median_cluster_RI_AS_4_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_4_hclust
+
+data_median_cluster_RI_AS_5_hclust <-  data_median_cluster_RI_AS_5_hclust[order(data_median_cluster_RI_AS_5_hclust$Median_Value),]
+quantile_RI_AS_5_hclust <- quantile(data_median_cluster_RI_AS_5_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_5_hclust
+
+data_median_cluster_RI_AS_6_hclust <-  data_median_cluster_RI_AS_6_hclust[order(data_median_cluster_RI_AS_6_hclust$Median_Value),]
+quantile_RI_AS_6_hclust <- quantile(data_median_cluster_RI_AS_6_hclust, probs = seq(0, 1, 1/4))
+quantile_RI_AS_6_hclust
+
+#Creating a table with all values from the created quantiles
+
+quantiles_RI_AS_6 <- cbind.data.frame(round(quantile_RI_AS_1_hclust, 2), round(quantile_RI_AS_2_hclust, 2), round(quantile_RI_AS_3_hclust, 2), round(quantile_RI_AS_4_hclust, 2), round(quantile_RI_AS_5_hclust, 2), round(quantile_RI_AS_6_hclust, 2))
+
+alt_RI_1 <- sprintf("Alternitavely Spliced 1 - RI - %d/%d events", nrow(psi_RI_AS_1_hclust), nrow(events_RI_hclust_AltSpl))
+alt_RI_2 <- sprintf("Alternitavely Spliced 2 - RI - %d/%d events", nrow(psi_RI_AS_2_hclust), nrow(events_RI_hclust_AltSpl))
+alt_RI_3 <- sprintf("Alternitavely Spliced 3 - RI - %d/%d events", nrow(psi_RI_AS_3_hclust), nrow(events_RI_hclust_AltSpl))
+alt_RI_4 <- sprintf("Alternitavely Spliced 4 - RI - %d/%d events", nrow(psi_RI_AS_4_hclust), nrow(events_RI_hclust_AltSpl))
+alt_RI_5 <- sprintf("Alternitavely Spliced 5 - RI - %d/%d events", nrow(psi_RI_AS_5_hclust), nrow(events_RI_hclust_AltSpl))
+alt_RI_6 <- sprintf("Alternitavely Spliced 6 - RI - %d/%d events", nrow(psi_RI_AS_6_hclust), nrow(events_RI_hclust_AltSpl))
+
+col_names_RI_AS_6 <- c(alt_RI_1, alt_RI_2, alt_RI_3, alt_RI_4, alt_RI_5, alt_RI_6)
+
+
+colnames(quantiles_RI_AS_6) <- col_names_RI_AS_6
+quantiles_RI_AS_6
+table_quantiles_RI_AS_6_hclust <- kable(quantiles_RI_AS_6, format = "html", table.attr = "border=\"1\"", 
+                            caption = "Quantiles Alternatively Spliced - RI - hierarchical clustering", align="ccc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+table_quantiles_RI_AS_6_hclust
+save_kable(x=table_quantiles_RI_AS_6_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_AS_6_hclust.html")
 
 ```
+
 
