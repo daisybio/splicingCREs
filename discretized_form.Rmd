@@ -1,0 +1,97 @@
+---
+title: "discretized_form"
+output: html_document
+date: "2023-05-25"
+author: "Aïsha Schuhegger" 
+Note: "Download and run all Rmd files from the github repository. You will need the ermerging results." 
+---
+
+```{r}
+library(dplyr)
+```
+
+
+Create a new events file where all the events belonging to the 'Included' or 'Excluded' cluster (regarding hclust) are excluded. 
+
+```{r}
+#Retained Intron 
+cluster_RI_3_histo_hclust #AS cluster regarding RI 
+
+psi_RI_AS_1_df <- as.data.frame(psi_RI_AS_1_hclust)
+psi_RI_AS_2_df <- as.data.frame(psi_RI_AS_2_hclust)
+psi_RI_AS_3_df <- as.data.frame(psi_RI_AS_3_hclust)
+psi_RI_AS_4_df <- as.data.frame(psi_RI_AS_4_hclust)
+psi_RI_AS_5_df <- as.data.frame(psi_RI_AS_5_hclust)
+psi_RI_AS_6_df <- as.data.frame(psi_RI_AS_6_hclust)
+
+median_RI_AS_1 <- as.vector(quantile_RI_AS_1_hclust)
+median_RI_AS_2 <- as.vector(quantile_RI_AS_2_hclust)
+median_RI_AS_3 <- as.vector(quantile_RI_AS_3_hclust)
+median_RI_AS_4 <- as.vector(quantile_RI_AS_4_hclust)
+median_RI_AS_5 <- as.vector(quantile_RI_AS_5_hclust)
+median_RI_AS_6 <- as.vector(quantile_RI_AS_6_hclust)
+
+psi_RI_AS_1_df <- ifelse(psi_RI_AS_1_df > median_RI_AS_1[3], 1, 0)
+psi_RI_AS_2_df <- ifelse(psi_RI_AS_2_df > median_RI_AS_2[3], 1, 0)
+psi_RI_AS_3_df <- ifelse(psi_RI_AS_3_df > median_RI_AS_3[3], 1, 0)
+psi_RI_AS_4_df <- ifelse(psi_RI_AS_4_df > median_RI_AS_4[3], 1, 0)
+psi_RI_AS_5_df <- ifelse(psi_RI_AS_5_df > median_RI_AS_5[3], 1, 0)
+psi_RI_AS_6_df <- ifelse(psi_RI_AS_6_df > median_RI_AS_6[3], 1, 0)
+
+
+discretized_df_RI <- dplyr::bind_rows(as.data.frame(psi_RI_AS_1_df), as.data.frame(psi_RI_AS_2_df), as.data.frame(psi_RI_AS_3_df), as.data.frame(psi_RI_AS_4_df), as.data.frame(psi_RI_AS_5_df), as.data.frame(psi_RI_AS_6_df))
+discretized_df_RI
+
+#cluster_SE_1_histo_hclust #AS cluster regarding SE 
+```
+
+```{r}
+#Skipped Exon 
+cluster_SE_1_histo_hclust #AS cluster regarding RI 
+
+psi_SE_AS_1_df <- as.data.frame(psi_SE_AS_1_hclust)
+psi_SE_AS_2_df <- as.data.frame(psi_SE_AS_2_hclust)
+psi_SE_AS_3_df <- as.data.frame(psi_SE_AS_3_hclust)
+psi_SE_AS_4_df <- as.data.frame(psi_SE_AS_4_hclust)
+psi_SE_AS_5_df <- as.data.frame(psi_SE_AS_5_hclust)
+psi_SE_AS_6_df <- as.data.frame(psi_SE_AS_6_hclust)
+
+median_SE_AS_1 <- as.vector(quantile_SE_AS_1_hclust)
+median_SE_AS_2 <- as.vector(quantile_SE_AS_2_hclust)
+median_SE_AS_3 <- as.vector(quantile_SE_AS_3_hclust)
+median_SE_AS_4 <- as.vector(quantile_SE_AS_4_hclust)
+median_SE_AS_5 <- as.vector(quantile_SE_AS_5_hclust)
+median_SE_AS_6 <- as.vector(quantile_SE_AS_6_hclust)
+
+psi_SE_AS_1_df <- ifelse(psi_SE_AS_1_df > median_SE_AS_1[3], 1, 0)
+psi_SE_AS_2_df <- ifelse(psi_SE_AS_2_df > median_SE_AS_2[3], 1, 0)
+psi_SE_AS_3_df <- ifelse(psi_SE_AS_3_df > median_SE_AS_3[3], 1, 0)
+psi_SE_AS_4_df <- ifelse(psi_SE_AS_4_df > median_SE_AS_4[3], 1, 0)
+psi_SE_AS_5_df <- ifelse(psi_SE_AS_5_df > median_SE_AS_5[3], 1, 0)
+psi_SE_AS_6_df <- ifelse(psi_SE_AS_6_df > median_SE_AS_6[3], 1, 0)
+
+
+discretized_df_SE <- dplyr::bind_rows(as.data.frame(psi_SE_AS_1_df), as.data.frame(psi_SE_AS_2_df), as.data.frame(psi_SE_AS_3_df), as.data.frame(psi_SE_AS_4_df), as.data.frame(psi_SE_AS_5_df), as.data.frame(psi_SE_AS_6_df))
+discretized_df_SE
+
+#cluster_SE_1_histo_hclust #AS cluster regarding SE 
+```
+
+Combine discretized_df_RI and discretized_df_SE
+```{r}
+discretized_df <- dplyr::bind_rows(discretized_df_RI, discretized_df_SE)
+# Order the data frame based on row names
+rownames_discretized_df <- as.vector(rownames(discretized_df))
+
+# Order the data frame based on row names
+discretized_df <- discretized_df[order(rownames_discretized_df), ]
+
+for (i in 1:nrow(discretized_df)){
+  rownames(discretized_df)[i] <- strsplit(rownames(discretized_df), ";")[[i]][1]
+}
+
+#Duplikate handling? 
+
+discretized_df
+```
+

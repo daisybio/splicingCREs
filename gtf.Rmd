@@ -5,6 +5,11 @@ date: "2023-05-25"
 author: "Aïsha Schuhegger"
 ---
 
+#gtf without NA rows
+#gtf only SE AS
+#gtf only RI AS 
+
+
 Load libraries
 ```{r}
 library(data.table)
@@ -14,6 +19,7 @@ Create data frame that contains the necessary information regarding the gtf anno
 ```{r}
 events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 
+events_AS <- events[events$event_id %in% rownames_discretized_df, ]
 gtf <- data.frame(matrix(nrow=nrow(events), ncol=9))
 # Set column names
 colnames(gtf) <- c("seqname", "source", "feature", "start", "end", "score", "strand", "frame", "attribute")
@@ -58,6 +64,7 @@ for (i in 1:nrow(gtf)){
 Writing the gtf file with the help of the data frame 'gtf'
 ```{r}
 gtf <- as.character(gtf)
+
 write.table(gtf, file = "annotation_events.gtf", sep = "\t", quote = FALSE, row.names = FALSE)
 
 ```
