@@ -1,0 +1,64 @@
+---
+title: "gtf"
+output: html_document
+date: "2023-05-25"
+author: "Aïsha Schuhegger"
+---
+
+Load libraries
+```{r}
+library(data.table)
+```
+
+Create data frame that contains the necessary information regarding the gtf annotation format.  
+```{r}
+events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
+
+gtf <- data.frame(matrix(nrow=nrow(events), ncol=9))
+# Set column names
+colnames(gtf) <- c("seqname", "source", "feature", "start", "end", "score", "strand", "frame", "attribute")
+
+#"empty" columns should be denoted with a '.'
+#seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. 
+#source - name of the program that generated this feature, or the data source (database or project name)
+#feature - feature type name, e.g. Gene, Variation, Similarity
+#start - Start position* of the feature, with sequence numbering starting at 1.
+#end - End position* of the feature, with sequence numbering starting at 1.
+#score - A floating point value.
+#strand - defined as + (forward) or - (reverse).
+#frame - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..
+#attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
+
+gtf$source <- "IHEC"
+
+for (i in 1:nrow(gtf)){
+  values <- strsplit(events$event_id[i], ";")[[1]]
+  separated_values <- unlist(strsplit(values, ":", fixed=TRUE))
+  separated_values[4] <- strsplit(as.character(separated_values[4]), "-", fixed = TRUE)
+  #separated_values[[4]][1] #start1
+  #separated_values[[4]][2] #end1
+  separated_values[5] <- strsplit(as.character(separated_values[5]), "-", fixed = TRUE)
+  #separated_values[[5]][1] #start2
+  #separated_values[[5]][2] #end2
+  
+  #print(separated_values)
+  
+  gtf$seqname[i] <- separated_values[3]
+  gtf$feature[i] <- 'gene'#actually 'exon' but STITCHIT has to 'think' that it is a gene 
+  gtf$start[i] <- separated_values[[4]][1] #QUESTION
+  gtf$end[i] <- separated_values[[5]][2] #QUESTION
+  gtf$score[i] <- '.'
+  gtf$strand[i] <- separated_values[6]
+  gtf$frame[i] <- '.'
+  gtf$attribute[i] <- sprintf("gene_id %s event_type %s", separated_values[1], separated_values[2]) #gene_id and Skipped Exon or Retained Intron 
+}
+
+```
+
+Writing the gtf file with the help of the data frame 'gtf'
+```{r}
+gtf <- as.character(gtf)
+write.table(gtf, file = "annotation_events.gtf", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
