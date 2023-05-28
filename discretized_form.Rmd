@@ -11,11 +11,11 @@ library(dplyr)
 ```
 
 
-Create a new events file where all the events belonging to the 'Included' or 'Excluded' cluster (regarding hclust) are excluded. 
+Create a new file (baesd on the data from the events file) where all the events belonging to the 'Included' or 'Excluded' cluster (regarding hclust) are excluded. 
 
 ```{r}
 #Retained Intron 
-cluster_RI_3_histo_hclust #AS cluster regarding RI 
+cluster_RI_3_histo_hclust #AS cluster regarding RI (based on specific events from the events.csv file)
 
 psi_RI_AS_1_df <- as.data.frame(psi_RI_AS_1_hclust)
 psi_RI_AS_2_df <- as.data.frame(psi_RI_AS_2_hclust)
@@ -47,7 +47,7 @@ discretized_df_RI
 
 ```{r}
 #Skipped Exon 
-cluster_SE_1_histo_hclust #AS cluster regarding RI 
+cluster_SE_1_histo_hclust #AS cluster regarding SE 
 
 psi_SE_AS_1_df <- as.data.frame(psi_SE_AS_1_hclust)
 psi_SE_AS_2_df <- as.data.frame(psi_SE_AS_2_hclust)
@@ -86,12 +86,43 @@ rownames_discretized_df <- as.vector(rownames(discretized_df))
 # Order the data frame based on row names
 discretized_df <- discretized_df[order(rownames_discretized_df), ]
 
-for (i in 1:nrow(discretized_df)){
-  rownames(discretized_df)[i] <- strsplit(rownames(discretized_df), ";")[[i]][1]
-}
+#for (i in 1:nrow(discretized_df)){
+#  rownames(discretized_df)[i] <- strsplit(rownames(discretized_df), ";")[[i]][1]
+#}
 
 #Duplikate handling? 
 
 discretized_df
+```
+
+Now: 0.5 is the threshold for every event 
+-> comparisson between discretized_df and discretized_05_df
+```{r}
+#cluster_RI_3_histo_hclust #AS cluster regarding RI
+#cluster_SE_1_histo_hclust #AS cluster regarding SE
+
+cluster_RI_3_histo_hclust <- as.data.frame(cluster_RI_3_histo_hclust)
+cluster_SE_1_histo_hclust <- as.data.frame(cluster_SE_1_histo_hclust)
+
+psi_RI_AS_05_df <- ifelse(cluster_RI_3_histo_hclust > 0.5, 1, 0)
+psi_SE_AS_05_df <- ifelse(cluster_SE_1_histo_hclust > 0.5, 1, 0)
+
+
+discretized_05_df <- dplyr::bind_rows(as.data.frame(psi_RI_AS_05_df), as.data.frame(psi_SE_AS_05_df))
+
+rownames_discretized_05_df <- as.vector(rownames(discretized_05_df))
+
+# Order the data frame based on row names
+discretized_05_df <- discretized_05_df[order(rownames_discretized_05_df), ]
+
+```
+
+Comparison between the data frames 
+
+```{r}
+common_values <- intersect(as.matrix(discretized_df), as.matrix(discretized_05_df))
+common_count <- length(common_values)
+common_count
+# -> 3 values are the same (possible?)
 ```
 

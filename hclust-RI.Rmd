@@ -5,7 +5,12 @@ date: "2023-05-11"
 author: "Aïsha Schuhegger"
 note: "written with the help of Quirin Manz" 
 ---
+0. Load libraries
+1. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) for the event type Retained Intron
+2. Use hierarchical clustering for the emd matrix
 
+
+0. Load libraries
 ```{r}
 library(data.table)
 library(R.utils)
@@ -32,7 +37,7 @@ Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
 }')
 ```
 
-# RETAINED INTRON 
+1. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) for the event type Retained Intron
 ```{r} 
 events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
@@ -51,6 +56,7 @@ dens_list_RI_hclust <- apply(psi_mat_RI_hclust, 1, function(x) {
 names(dens_list_RI_hclust) <- as.character(events_RI_hclust[, as.character(ID)])
 ```
 
+
 ```{r}
 #Calculate the emd matrix for the RI events 
 upper_triangle_RI <- rbindlist(pbmcapply::pbmclapply(
@@ -68,7 +74,11 @@ dist_dt_RI <- dist_dt_RI[, -"from"]
 dim(dist_dt_RI)
 dist_RI <- as.dist(as.matrix(dist_dt_RI))
 hclust_result_RI <- hclust(dist_RI)
+```
 
+2. Use hierarchical clustering for the emd matrix
+
+```{r}
 # Plot the dendrogram with three branches
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_RI.pdf")
 plot(hclust_result_RI, hang = -1, main = "Dendrogram Retained Intron", labels = FALSE, xlab = "Distance")
@@ -183,7 +193,7 @@ save_kable(x=table_quantiles_RI_hclust, file= "/nfs/home/students/a.schuhe/scrip
 
 ```
 
-#Having a further look on cluster 3 -> Alternatively Spliced 
+Having a further look on cluster 3 -> Alternatively Spliced 
 ```{r}
 # Extract the third branch because cluster 3 -> Alternatively Spliced 
 # Already done above:

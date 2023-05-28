@@ -6,6 +6,12 @@ author: "Aïsha Schuhegger"
 note: "written with the help of Quirin Manz" 
 ---
 
+0. Load libraries
+1. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) for the event type Skipped Exon
+2. Use hierarchical clustering for the emd matrix
+
+
+0. Load libraries
 ```{r}
 library(data.table)
 library(R.utils)
@@ -32,7 +38,7 @@ Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
 }')
 ```
 
-# SKIPPED EXON 
+1. Use a distance function (earth movers distance - emd) to calculate the distances of the histograms and create a distance matrix (emd_matrix) for the event type Skipped Exon
 ```{r} 
 events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 ihecs <- names(events)[startsWith(names(events), prefix = "IHECRE")]
@@ -67,9 +73,11 @@ dist_dt_SE <- dist_dt_SE[, -"from"]
 dim(dist_dt_SE)
 dist_SE <- as.dist(as.matrix(dist_dt_SE))
 hclust_result_SE <- hclust(dist_SE)
+```
 
-#TODO: create plot for dendrogram (3 main branches)
 
+2. Use hierarchical clustering for the emd matrix
+```{r}
 # Cut the tree into three branches
 cutree_result_SE <- cutree(hclust_result_SE, k = num_branches)
 # Plot the dendrogram with three branches
@@ -229,7 +237,7 @@ save_kable(x=table_quantiles_RI_SE_hclust, file= "/nfs/home/students/a.schuhe/sc
 ```
 
 
-#Having a further look on cluster 1 -> Alternatively Spliced 
+Having a further look on cluster 1 -> Alternatively Spliced 
 ```{r}
 # Extract the third branch because cluster 3 -> Alternatively Spliced 
 # Already done above:
