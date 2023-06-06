@@ -1,0 +1,64 @@
+---
+title: "continous_form"
+output: html_document
+date: "2023-06-05"
+author: "Aïsha Schuhegger" 
+Note: "Download and run all Rmd files from the github repository. You will need the ermerging results." 
+---
+
+Aim of the script: Create for every row of the continous psi-value matrix a file where the column names have the same as the bigwig files. 
+
+```{r}
+# This is based on the hclust-SE.Rmd and hclust-RI.Rmd files. 
+psi_SE_AS <- as.data.frame(events_SE_hclust_AltSpl[, ihecs])
+psi_RI_AS <- as.data.frame(events_RI_hclust_AltSpl[, ihecs])
+
+continous_df <- dplyr::bind_rows(psi_SE_AS, psi_RI_AS) 
+#dim(continous_df) #689 x 358 
+
+# Order the data frame based on row names
+rownames_continous_df <- as.vector(rownames(continous_df))
+
+# Order the data frame based on row names
+continous_df <- continous_df[order(rownames_continous_df), ]
+```
+
+Create a file for every row and exclude the columns that have NA as value
+
+```{r}
+library(dplyr)
+
+epiatlas <- read.csv("/nfs/data/IHEC/RNAseq/epiatlas_metadata.csv")
+
+histone_modifications = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
+for (histone_modification in histone_modifications) {
+  # Create a new dataframe specific to the histone modification
+  temp_df <- continous_df
+  
+  i <- 1
+  for (col_name in colnames(continous_df)) {
+    filtered_data <- epiatlas %>% filter(grepl(col_name, epirr_id) & experiment_type == histone_modification & assay_type == "ChIP-Seq")
+    file_path <- filtered_data$data_file_path
+    modified_file_path <- basename(gsub("\\*", "fc.signal", file_path))
+    colnames(temp_df)[i] <- modified_file_path
+    i <- i + 1
+  }
+  
+  # Loop through each row in the new dataframe for the specific histone modification
+  for (i in 1:nrow(temp_df)) {
+    selected_row <- temp_df[i, ]
+    selected_row <- as.data.frame(selected_row)
+    row_name <- sub(";", "_", rownames(temp_df)[i])
+    rownames(selected_row) <- row_name
+    
+    selected_row <- selected_row[, !colSums(is.na(selected_row))]
+    
+    # Define the file name
+    file_name <- paste0("output_continous/", row_name, "_", histone_modification, ".txt")
+    
+    # Write the selected row to a file
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t")
+  }
+}
+```
+

@@ -61,7 +61,7 @@ for (i in 1:nrow(gtf)){
   gtf$score[i] <- '.'
   gtf$strand[i] <- separated_values[6]
   gtf$frame[i] <- '.'
-  gtf$attribute[i] <- sprintf('event_id "%s" ; event_type "%s"', event_id, separated_values[2]) #gene_id and Skipped Exon or Retained Intron 
+  gtf$attribute[i] <- sprintf('gene_id "%s" ; event_type "%s"', sub(";", "_", event_id), separated_values[2]) #gene_id = event_id and ";" is transformed to "_" and Skipped Exon or Retained Intron 
 
   
 }
@@ -72,7 +72,7 @@ Writing the gtf file with the help of the data frame 'gtf'
 ```{r}
 #gtf <- as.character(gtf)
 gtf <- apply(gtf,2,as.character)
-write.table(gtfTest, file = "annotation_events.gtf", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(gtf, file = "annotation_events.gtf", sep = "\t", quote = FALSE, row.names = FALSE)
 
 ```
 

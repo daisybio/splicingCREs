@@ -37,8 +37,28 @@ psi_RI_AS_3_df <- ifelse(psi_RI_AS_3_df > median_RI_AS_3[3], 1, 0)
 psi_RI_AS_4_df <- ifelse(psi_RI_AS_4_df > median_RI_AS_4[3], 1, 0)
 psi_RI_AS_5_df <- ifelse(psi_RI_AS_5_df > median_RI_AS_5[3], 1, 0)
 psi_RI_AS_6_df <- ifelse(psi_RI_AS_6_df > median_RI_AS_6[3], 1, 0)
+```
+
+```{r}
+#Retained Intron 
+#cluster_RI_3_histo_hclust #AS cluster regarding RI (based on specific events from the events.csv file)
+
+#df_names <- paste0("psi_RI_AS_", 1:6, "_df")
+#hclust_names <- paste0("psi_RI_AS_", 1:6, "_hclust")
+#median_names <- paste0("median_RI_AS_", 1:6)
+
+#lapply(seq_along(df_names), function(i) {
+#  psi_RI_AS_df <- get(df_names[i])
+#  median_RI_AS <- get(median_names[i])
+#  assign(df_names[i], as.data.frame(get(hclust_names[i])))
+#  assign(median_names[i], as.vector(get(hclust_names[i])))
+#  psi_RI_AS_df <- ifelse(psi_RI_AS_df > median_RI_AS[3], 1, 0)
+#  assign(df_names[i], psi_RI_AS_df)
+#})
+```
 
 
+```{r}
 discretized_df_RI <- dplyr::bind_rows(as.data.frame(psi_RI_AS_1_df), as.data.frame(psi_RI_AS_2_df), as.data.frame(psi_RI_AS_3_df), as.data.frame(psi_RI_AS_4_df), as.data.frame(psi_RI_AS_5_df), as.data.frame(psi_RI_AS_6_df))
 discretized_df_RI
 
@@ -89,14 +109,54 @@ discretized_df <- discretized_df[order(rownames_discretized_df), ]
 #for (i in 1:nrow(discretized_df)){
 #  rownames(discretized_df)[i] <- strsplit(rownames(discretized_df), ";")[[i]][1]
 #}
-
-#Duplikate handling? 
+# -> take event_id as identification for the rownames 
 
 discretized_df
 ```
 
+
+Create a file for every row and exclude the columns that have NA as value
+
+```{r}
+library(dplyr)
+
+epiatlas <- read.csv("/nfs/data/IHEC/RNAseq/epiatlas_metadata.csv")
+
+histone_modifications = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
+for (histone_modification in histone_modifications) {
+  # Create a new dataframe specific to the histone modification
+  temp_df <- discretized_df
+  
+  i <- 1
+  for (col_name in colnames(discretized_df)) {
+    filtered_data <- epiatlas %>% filter(grepl(col_name, epirr_id) & experiment_type == histone_modification & assay_type == "ChIP-Seq")
+    file_path <- filtered_data$data_file_path
+    modified_file_path <- basename(gsub("\\*", "fc.signal", file_path))
+    colnames(temp_df)[i] <- modified_file_path
+    i <- i + 1
+  }
+  
+  # Loop through each row in the new dataframe for the specific histone modification
+  for (i in 1:nrow(temp_df)) {
+    selected_row <- temp_df[i, ]
+    selected_row <- as.data.frame(selected_row)
+    row_name <- sub(";", "_", rownames(temp_df)[i])
+    rownames(selected_row) <- row_name
+    
+    selected_row <- selected_row[, !colSums(is.na(selected_row))]
+    
+    # Define the file name
+    file_name <- paste0("output_discretized/", row_name, "_", histone_modification, ".txt")
+    
+    # Write the selected row to a file
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t")
+  }
+}
+```
+
+
 Now: 0.5 is the threshold for every event 
--> comparisson between discretized_df and discretized_05_df
+-> comparison between discretized_df and discretized_05_df
 ```{r}
 #cluster_RI_3_histo_hclust #AS cluster regarding RI
 #cluster_SE_1_histo_hclust #AS cluster regarding SE
@@ -120,9 +180,6 @@ discretized_05_df <- discretized_05_df[order(rownames_discretized_05_df), ]
 Comparison between the data frames 
 
 ```{r}
-common_values <- intersect(as.matrix(discretized_df), as.matrix(discretized_05_df))
-common_count <- length(common_values)
-common_count
-# -> 3 values are the same (possible?)
+rowSums(discretized_df == discretized_05_df, na.rm=TRUE) #-> & NA beachten 
 ```
 
