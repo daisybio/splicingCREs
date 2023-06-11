@@ -1,2 +1,0 @@
-"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00000222.3.123ef280-d4ea-4ca0-978c-a10942825cc4.fc.signal"	"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00004605.1.9bf3f7d0-484d-45f8-8d1f-2e9e5a1c459e.fc.signal"
-"ENSG00000204022.9;SE:chr10:88596416-88596790:88596936-88602576:+"	1	0

@@ -21,6 +21,13 @@ Create data frame that contains the necessary information (events belonging to t
 events <- fread("/nfs/home/students/a.schuhe/template/events.csv.gz")
 
 events_AS <- events[events$event_id %in% rownames_discretized_df, ]
+events_AS <- events_AS[order(events_AS$event_id), ]
+
+helper_eventID <- data.frame(matrix(nrow=nrow(events_AS), ncol=2))
+colnames(helper_eventID) <- c("event_id", "ID")
+helper_eventID$event_id <- events_AS$event_id
+helper_eventID$ID <- rownames(helper_eventID)
+
 gtf <- data.frame(matrix(nrow=nrow(events_AS), ncol=9))
 # Set column names
 colnames(gtf) <- c("seqname", "source", "feature", "start", "end", "score", "strand", "frame", "attribute")
@@ -37,9 +44,11 @@ colnames(gtf) <- c("seqname", "source", "feature", "start", "end", "score", "str
 #attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
 
 gtf$source <- "IHEC"
-
+helper_eventID$ID <- as.integer(helper_eventID$ID)
 for (i in 1:nrow(gtf)){
-  event_id <- events$event_id[i]
+  event_id <- events_AS$event_id[i]
+  #id_value <- helper_eventID$ID[helper_eventID$event_id == event_id]
+  id_value <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
   values <- strsplit(event_id, ";")[[1]]
   separated_values <- unlist(strsplit(values, ":", fixed=TRUE))
   separated_values[4] <- strsplit(as.character(separated_values[4]), "-", fixed = TRUE)
@@ -61,7 +70,7 @@ for (i in 1:nrow(gtf)){
   gtf$score[i] <- '.'
   gtf$strand[i] <- separated_values[6]
   gtf$frame[i] <- '.'
-  gtf$attribute[i] <- sprintf('gene_id "%s" ; event_type "%s"', sub(";", "_", event_id), separated_values[2]) #gene_id = event_id and ";" is transformed to "_" and Skipped Exon or Retained Intron 
+  gtf$attribute[i] <- sprintf('gene_id "%s"; event_type "%s";', id_value, separated_values[2]) #gene_id = event_id and ";" is transformed to "_" and Skipped Exon or Retained Intron 
 
   
 }

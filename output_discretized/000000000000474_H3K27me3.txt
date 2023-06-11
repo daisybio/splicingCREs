@@ -1,0 +1,2 @@
+ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00001973.1.eb6b8116-681b-4ebd-8a3a-5c8e0b38a2a8.fc.signal	ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00001990.1.db376d3b-ae63-4e49-80d2-dc3c632957a3.fc.signal	ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00002063.1.43d53f41-e4a2-4421-b86f-0d0bce6de71d.fc.signal	ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00002067.1.41844a41-a9d8-47e3-9699-651cca6131a4.fc.signal
+000000000000474	0	1	1	0

@@ -111,7 +111,8 @@ discretized_df <- discretized_df[order(rownames_discretized_df), ]
 #}
 # -> take event_id as identification for the rownames 
 
-discretized_df
+head(discretized_df)
+
 ```
 
 
@@ -121,7 +122,7 @@ Create a file for every row and exclude the columns that have NA as value
 library(dplyr)
 
 epiatlas <- read.csv("/nfs/data/IHEC/RNAseq/epiatlas_metadata.csv")
-
+helper_eventID$ID <- as.integer(helper_eventID$ID)
 histone_modifications = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
 for (histone_modification in histone_modifications) {
   # Create a new dataframe specific to the histone modification
@@ -140,7 +141,9 @@ for (histone_modification in histone_modifications) {
   for (i in 1:nrow(temp_df)) {
     selected_row <- temp_df[i, ]
     selected_row <- as.data.frame(selected_row)
-    row_name <- sub(";", "_", rownames(temp_df)[i])
+    #row_name <- sub(";", "_", rownames(temp_df)[i])
+    #row_name <- helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])]
+    row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
     rownames(selected_row) <- row_name
     
     selected_row <- selected_row[, !colSums(is.na(selected_row))]
@@ -149,9 +152,10 @@ for (histone_modification in histone_modifications) {
     file_name <- paste0("output_discretized/", row_name, "_", histone_modification, ".txt")
     
     # Write the selected row to a file
-    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t")
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t", quote=FALSE)
   }
 }
+
 ```
 
 
