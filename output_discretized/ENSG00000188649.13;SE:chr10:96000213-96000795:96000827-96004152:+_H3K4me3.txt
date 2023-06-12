@@ -1,2 +1,0 @@
-"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00000235.3.fa965d5e-3212-42b6-831c-bef0d8c34b17.fc.signal"	"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00003684.3.ccd0be12-ccb0-4c4e-b1e2-a054444b344c.fc.signal"	"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00003686.3.cd4534e8-8eb1-43de-b06d-b173d359a20b.fc.signal"	"ihec.chipseq.ihec-chipseq-containerv1.1.4.IHECRE00004604.3.397dad66-8eeb-4031-bd0a-a0b7a2fe32fc.fc.signal"
-"ENSG00000188649.13;SE:chr10:96000213-96000795:96000827-96004152:+"	1	0	1	1
