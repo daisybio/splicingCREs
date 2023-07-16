@@ -49,12 +49,13 @@ for (histone_modification in histone_modifications) {
     selected_row <- temp_df[i, ]
     selected_row <- as.data.frame(selected_row)
     row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
+    row_name_EventID <- sub(";", "_", rownames(temp_df)[i])
 
     
     selected_row <- selected_row[, !colSums(is.na(selected_row))]
     
     # Define the file name
-    file_name <- paste0("output_continous/", row_name, "_", histone_modification, ".txt")
+    file_name <- paste0("output_continous/", row_name, "_", row_name_EventID, "_", histone_modification, ".txt")
     
     # Write the selected row to a file
     write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t")
@@ -64,17 +65,50 @@ for (histone_modification in histone_modifications) {
   for (i in 1:nrow(temp_df)) {
     selected_row <- temp_df[i, ]
     selected_row <- as.data.frame(selected_row)
+    row_name_EventID <- sub(";", "_", rownames(temp_df1)[i])
     row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
     rownames(selected_row) <- row_name
     
     selected_row <- selected_row[, !colSums(is.na(selected_row))]
     
     # Define the file name
-    file_name <- paste0("output_continous/", row_name, "_", histone_modification, ".txt")
+    file_name <- paste0("output_continous/", row_name, "_", row_name_EventID, "_", histone_modification, ".txt")
     
     # Write the selected row to a file
     write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
   }
 }
 ```
+
+```{r}
+temp_df1_cont <- continous_df
+head(temp_df1_cont)
+  i <- 1
+  for (col_name in colnames(continous_df)) {
+    filtered_data <- epiatlas %>% filter(grepl(col_name, epirr_id) & experiment_type == histone_modification & assay_type == "ChIP-Seq")
+    file_path <- filtered_data$data_file_path
+    modified_file_path <- basename(gsub("\\*", "fc.signal", file_path))
+    colnames(temp_df1_cont)[i] <- modified_file_path
+    i <- i + 1
+  }
+  
+  head(temp_df1_cont)
+  
+    selected_row <- temp_df1_cont[1, ]
+    selected_row <- as.data.frame(selected_row)
+    row_name_EventID <- sub(";", "_", rownames(temp_df1_cont)[i])
+    row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df1[1,])])
+    rownames(selected_row) <- row_name
+    
+    #selected_row <- selected_row[, !colSums(is.na(selected_row))]
+    
+    # Define the file name
+    file_name <- paste0("output_contionus/NA_", row_name, "_", row_name_EventID, "_", histone_modification, ".txt")
+    
+    # Write the selected row to a file
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t", quote=FALSE)
+    
+    ncol(selected_row)
+```
+
 

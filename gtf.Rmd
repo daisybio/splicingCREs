@@ -51,30 +51,32 @@ for (i in 1:nrow(gtf)){
   id_value <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
   values <- strsplit(event_id, ";")[[1]]
   separated_values <- unlist(strsplit(values, ":", fixed=TRUE))
-  separated_values[4] <- strsplit(as.character(separated_values[4]), "-", fixed = TRUE)
-  #separated_values[[4]][1] #SE: e1, RI: s1
-  #separated_values[[4]][2] #SE: s2, RI: e1
-  separated_values[5] <- strsplit(as.character(separated_values[5]), "-", fixed = TRUE)
-  #separated_values[[5]][1] #SE: e2, RI: s2
-  #separated_values[[5]][2] #SE: s3, RI: e2
-  
+  #print(separated_values)
   gtf$seqname[i] <- separated_values[3]
   gtf$feature[i] <- 'gene'#actually 'exon' but STITCHIT has to 'think' that it is a gene 
   if(separated_values[2] == "SE") {
-    gtf$start[i] <- separated_values[[4]][2] #SE: s2 
-    gtf$end[i] <- separated_values[[5]][1] #SE: e2
+      separated_values[4] <- strsplit(as.character(separated_values[4]), "-", fixed = TRUE)
+      #separated_values[[4]][1] #SE: e1
+      #separated_values[[4]][2] #SE: s2
+      separated_values[5] <- strsplit(as.character(separated_values[5]), "-", fixed = TRUE)
+      #separated_values[[5]][1] #SE: e2
+      #separated_values[[5]][2] #SE: s3
+      #Skipped Exon Event: s2 to e2
+      gtf$start[i] <- separated_values[[4]][2] #SE: s2 
+      gtf$end[i] <- separated_values[[5]][1] #SE: e2
+      gtf$strand[i] <- separated_values[6]
   } else { #RI
-    gtf$start[i] <- separated_values[[4]][2] # RI: e1
-    gtf$end[i] <- separated_values[[5]][1] #RI: s2
+      separated_values[5] <- strsplit(as.character(separated_values[5]), "-", fixed=TRUE)
+      gtf$start[i] <- separated_values[[5]][1] # RI: e1
+      gtf$end[i] <- separated_values[[5]][2] #RI: s2
+      gtf$strand[i] <- separated_values[7]
   }
   gtf$score[i] <- '.'
-  gtf$strand[i] <- separated_values[6]
   gtf$frame[i] <- '.'
   gtf$attribute[i] <- sprintf('gene_id "%s"; event_type "%s";', id_value, separated_values[2]) #gene_id = event_id and ";" is transformed to "_" and Skipped Exon or Retained Intron 
-
   
 }
-
+events_AS$event_id[227]
 ```
 
 Writing the gtf file with the help of the data frame 'gtf'
