@@ -21,7 +21,7 @@ resfactor = 3
 
 Upstream
 ```{r}
-png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/pstream_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Upstream_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
 ggplot(df_HM_Overlap, aes(x=Upstream, fill=EventType)) + 
                               geom_histogram(bins = 20, color = "white", position = "dodge") +
                               scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
@@ -56,7 +56,7 @@ ggplot(df_HM_Overlap, aes(x=Overlapping.Upstream.Adjacent...RoI, fill=EventType)
                               scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
                               xlab("Amount of significant segments per event \nLocation: Upstream Adjacent + RoI") +
                               ylab("Count") + 
-                              labs(title="The amount of significant segments that overlapped upstream adjacent \nand roi to the region of interest of the event") + 
+                              labs(title="The amount of significant segments that overlapped upstream adjacent \nand the region of interest of the event") + 
                               facet_wrap(vars(Class)) +
                               theme_classic()
 dev.off()
@@ -76,7 +76,7 @@ ggplot(df_HM_Overlap, aes(x=Overlapping.Total.Up.Down, fill=EventType)) +
 dev.off()
 ```
 
-Overlapping Downstream Adjacent + Region of interest
+Overlapping Downstream Adjacent + Region of interest #here
 ```{r}
 png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingDownstreamAdjacent+RoI_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
 ggplot(df_HM_Overlap, aes(x=Overlapping.Downstream.Adjacent...RoI, fill=EventType)) + 
@@ -84,7 +84,7 @@ ggplot(df_HM_Overlap, aes(x=Overlapping.Downstream.Adjacent...RoI, fill=EventTyp
                               scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
                               xlab("Amount of significant segments per event \nLocation: Downstream Adjacent + RoI") +
                               ylab("Count") + 
-                              labs(title="The amount of significant segments that overlapped Downstream adjacent \nand roi to the region of interest of the event") + 
+                              labs(title="The amount of significant segments that overlapped Downstream adjacent \nand the region of interest of the event") + 
                               facet_wrap(vars(Class)) +
                               theme_classic()
 dev.off()
