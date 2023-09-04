@@ -23,7 +23,7 @@ The output_CorrelationShuffle/ includes the data frames constructed for the corr
 **Discretized and continous data:**
 The discretized and continous PSI values for every event can be seen in the output_discretized/ and output_continous/ folders. 
 
-**Files: **
+**Files:**
 The annotation_events.gtf file is based on the gtf format (https://www.ensembl.org/info/website/upload/gff.html) and produced with the file /scripts/gtf.Rmd. It is necessary as input for the algorithm STITCHIT.
 The file epiatlas_metadata.csv and events.csv.gz are previously computed dataset and serve as fundament for this thesis. 
 The hg38.chrom.sizes file includes the chromosome sizes of the human (https://www.ncbi.nlm.nih.gov/assembly/?term=GCA_000001405). 
