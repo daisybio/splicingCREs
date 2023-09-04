@@ -1,8 +1,11 @@
 # splicingREMs
 
-Author: Aïsha Schuhegger
+Author: Aïsha Schuhegger 
+
 Advisor: Quirin Manz
+
 Supervisor: Dr. Markus List
+
 2nd Supervisor: Dr. Josch Pauling 
 
 
