@@ -1,0 +1,56 @@
+---
+title: "consensus_clustering_SE"
+output: html_document
+date: "2023-05-15"
+author: "Aïsha Schuhegger"
+note: "You need to execute the scripts hclust-SE.Rmd and hclust-RI.Rmd before running this."
+---
+
+```{r}
+library(ConsensusClusterPlus)
+```
+Parameters for ConsensusClusterPlus:
+- d: distance matrix 
+- pItem: 80% item resampling
+- pFeature: 80% gene resampling 
+- maxK: a maximum evaluated k of 6 so that cluster counts of 2,3,4,5,6 are evaluated (in practice a higher cluster count such as 20 is recommended)
+- reps: 50 resamplings (! in practice a much hihger reps is recommended such as 1000)
+- clusterAlg: agglomerative hierarchical clustering algorithm
+- distance: 1-Perason correlation distance
+- title: title for the output 
+
+# Skipped Exon
+```{r}
+dist_dt_SE_rcName <- dist_dt_SE
+rownames(dist_dt_SE_rcName) <- rownames(events_SE)
+colnames(dist_dt_SE_rcName) <- rownames(events_SE)
+dist_SE_cons <- as.dist(as.matrix(dist_dt_SE_rcName))
+cons_mat_SE <- ConsensusClusterPlus(dist_SE_cons, maxK=6,reps=50,pItem=0.8,pFeature=1, title='Consensus matrix SE', clusterAlg='hc', distance='pearson', seed=1262118388.71279,plot='png')
+```
+
+```{r}
+#Top five rows and columns of results for k=6
+cons_mat_SE[[3]][["consensusMatrix"]][1:5,1:5]
+
+#ConsensusTree - hclust object
+cons_mat_SE[[3]][["consensusTree"]]
+
+#ConsenusClass - the sample classifications
+cons_mat_SE[[3]][["consensusClass"]][1:5]
+
+```
+```{r}
+#ml - consensus matrix result
+#clrs - colors for cluster
+
+
+```
+After executing ConsensusClusterPlus, one can optionally calculate cluster-
+consensus and item-consensus results by:
+```{r}
+icl_SE <- calcICL(cons_mat_SE,title='Consensus Clustering SE',plot="png")
+
+icl_SE
+icl_SE[["clusterConsensus"]]
+```
+

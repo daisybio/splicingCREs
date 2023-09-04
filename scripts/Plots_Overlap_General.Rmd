@@ -1,0 +1,273 @@
+---
+title: "Plots_Overlap_General"
+author: "Aïsha"
+date: "8/22/2023"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(tidyr)
+```
+
+
+```{r}
+df_HM_Ov <- read.csv("/nfs/home/students/a.schuhe/scripts/splicingREMs/output_CorrelationShuffle/df_HM_Overlap_Up_Down_Ov_SegSpearman.csv")
+df_HM_Ov$Event <- gsub("_H3.*", "", df_HM_Ov$Event)
+df_HM_Ov_SE <- df_HM_Ov[df_HM_Ov$Event.type == "SE",]
+df_HM_Ov_RI <- df_HM_Ov[df_HM_Ov$Event.type == "RI",]
+EventType <- df_HM_Ov$Event.type
+se_color <- "#40B0A6"
+ri_color <- "#B277F5"
+resfactor = 3
+```
+
+SE
+```{r}
+df_long_category <- df_HM_Ov_SE %>%
+  pivot_longer(cols = c(Upstream, Overlapping, Downstream), names_to = "Category", values_to = "Value")
+
+# Create a ggplot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/BarPlots_Absolute_SE.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long_category, aes(x = Category, y = Value, fill = Category)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  facet_wrap(~ Class) +  # Facet by Class
+  labs(title = "Location of Significant Segments \nper Histone Modification - SE", x = "Histone Modification", y = "Absolute Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank())
+dev.off()
+```
+RI
+```{r}
+df_long_category <- df_HM_Ov_RI %>%
+  pivot_longer(cols = c(Upstream, Overlapping, Downstream), names_to = "Category", values_to = "Value")
+
+# Create a ggplot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/BarPlots_Absolute_RI.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long_category, aes(x = Category, y = Value, fill = Category)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  facet_wrap(~ Class) +  # Facet by Class
+  labs(title = "Location of Significant Segments \nper Histone Modification - RI", x = "Histone Modification", y = "Absolute Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank())
+dev.off()
+```
+
+SE
+```{r}
+df_long <- df_HM_Ov_SE %>%
+  pivot_longer(cols = c(Upstream, Overlapping, Downstream), names_to = "Location", values_to = "Value")
+
+# Create a ggplot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/StackedBarPlot_Absolute_SE.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long, aes(x = Class, y = Value, fill = Location)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  labs(title = "Absolute Distribution of Significant Segments by Location \nand Histone Modification - SE", x = "Histone Modification", y = "Absolute Amount of Significant Segments") +
+  theme_minimal()
+dev.off()
+```
+
+RI
+```{r}
+df_long_RI <- df_HM_Ov_RI %>%
+  pivot_longer(cols = c(Upstream, Overlapping, Downstream), names_to = "Location", values_to = "Value")
+
+# Create a ggplot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/StackedBarPlot_Absolute_RI.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long_RI, aes(x = Class, y = Value, fill = Location)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  labs(title = "Absolute Distribution of Significant Segments by Location \nand Histone Modification - RI", x = "Histone Modification", y = "Absolute Amount of Significant Segments") +
+  theme_minimal()
+dev.off()
+```
+
+
+
+```{r}
+#H3K27ac
+upstream_h3k27ac <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K27ac"]
+overlapping_h3k27ac <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K27ac"]
+downstream_h3k27ac <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K27ac"]
+
+total_sum <- sum(upstream_h3k27ac) + sum(overlapping_h3k27ac) + sum(downstream_h3k27ac)
+
+upstream_relative_h3k27ac <- sum(upstream_h3k27ac) / total_sum
+overlapping_relative_h3k27ac <- sum(overlapping_h3k27ac) / total_sum
+downstream_relative_h3k27ac <- sum(downstream_h3k27ac) / total_sum
+
+#H3K27me3
+upstream_h3k27me3 <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K27me3"]
+overlapping_h3k27me3 <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K27me3"]
+downstream_h3k27me3 <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K27me3"]
+
+total_sum <- sum(upstream_h3k27me3) + sum(overlapping_h3k27me3) + sum(downstream_h3k27me3)
+
+upstream_relative_h3k27me3 <- sum(upstream_h3k27me3) / total_sum
+overlapping_relative_h3k27me3 <- sum(overlapping_h3k27me3) / total_sum
+downstream_relative_h3k27me3 <- sum(downstream_h3k27me3) / total_sum
+
+#H3K36me3
+upstream_h3k36me3 <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K36me3"]
+overlapping_h3k36me3 <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K36me3"]
+downstream_h3k36me3 <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K36me3"]
+
+total_sum <- sum(upstream_h3k36me3) + sum(overlapping_h3k36me3) + sum(downstream_h3k36me3)
+
+upstream_relative_h3k36me3 <- sum(upstream_h3k36me3) / total_sum
+overlapping_relative_h3k36me3 <- sum(overlapping_h3k36me3) / total_sum
+downstream_relative_h3k36me3 <- sum(downstream_h3k36me3) / total_sum
+
+#H3K4me1
+upstream_h3k4me1 <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K4me1"]
+overlapping_h3k4me1 <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K4me1"]
+downstream_h3k4me1 <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K4me1"]
+
+total_sum <- sum(upstream_h3k4me1) + sum(overlapping_h3k4me1) + sum(downstream_h3k4me1)
+
+upstream_relative_h3k4me1 <- sum(upstream_h3k4me1) / total_sum
+overlapping_relative_h3k4me1 <- sum(overlapping_h3k4me1) / total_sum
+downstream_relative_h3k4me1 <- sum(downstream_h3k4me1) / total_sum
+
+#H3K4me3
+upstream_h3k4me3 <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K4me3"]
+overlapping_h3k4me3 <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K4me3"]
+downstream_h3k4me3 <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K4me3"]
+
+total_sum <- sum(upstream_h3k4me3) + sum(overlapping_h3k4me3) + sum(downstream_h3k4me3)
+
+upstream_relative_h3k4me3 <- sum(upstream_h3k4me3) / total_sum
+overlapping_relative_h3k4me3 <- sum(overlapping_h3k4me3) / total_sum
+downstream_relative_h3k4me3 <- sum(downstream_h3k4me3) / total_sum
+
+#H3K9me3
+upstream_h3k9me3 <- df_HM_Ov_SE$Upstream[df_HM_Ov_SE$Class == "H3K9me3"]
+overlapping_h3k9me3 <- df_HM_Ov_SE$Overlapping[df_HM_Ov_SE$Class == "H3K9me3"]
+downstream_h3k9me3 <- df_HM_Ov_SE$Downstream[df_HM_Ov_SE$Class == "H3K9me3"]
+
+total_sum <- sum(upstream_h3k9me3) + sum(overlapping_h3k9me3) + sum(downstream_h3k9me3)
+
+upstream_relative_h3k9me3 <- sum(upstream_h3k9me3) / total_sum
+overlapping_relative_h3k9me3 <- sum(overlapping_h3k9me3) / total_sum
+downstream_relative_h3k9me3 <- sum(downstream_h3k9me3) / total_sum
+```
+
+
+```{r}
+df_HM_Ov_SE_Percentage <- data.frame(
+  Upstream = c(upstream_relative_h3k27ac, upstream_relative_h3k27me3, upstream_relative_h3k36me3, upstream_relative_h3k4me1, upstream_relative_h3k4me3, upstream_relative_h3k9me3),
+  Overlapping = c(overlapping_relative_h3k27ac, overlapping_relative_h3k27me3, overlapping_relative_h3k36me3, overlapping_relative_h3k4me1, overlapping_relative_h3k4me3, overlapping_relative_h3k9me3),
+  Downstream = c(downstream_relative_h3k27ac, downstream_relative_h3k27me3, downstream_relative_h3k36me3, downstream_relative_h3k4me1, downstream_relative_h3k4me3, downstream_relative_h3k9me3),
+  Class = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
+)
+
+df_long_relative <- pivot_longer(df_HM_Ov_SE_Percentage, cols = c(Upstream, Overlapping, Downstream), names_to = "Location", values_to = "Percentage")
+
+# Create the stacked bar plot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/StackedBarPlot_Relative_SE.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long_relative, aes(x = Class, y = Percentage, fill = Location)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Relative Distribution of Significant Segments by Location \nand Histone Modification - SE",
+       x = "Histone Modification",
+       y = "Percentage") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  theme_minimal() 
+dev.off()
+
+```
+
+RI
+```{r}
+#H3K27ac
+upstream_h3k27ac <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K27ac"]
+overlapping_h3k27ac <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K27ac"]
+downstream_h3k27ac <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K27ac"]
+
+total_sum <- sum(upstream_h3k27ac) + sum(overlapping_h3k27ac) + sum(downstream_h3k27ac)
+
+upstream_relative_h3k27ac <- sum(upstream_h3k27ac) / total_sum
+overlapping_relative_h3k27ac <- sum(overlapping_h3k27ac) / total_sum
+downstream_relative_h3k27ac <- sum(downstream_h3k27ac) / total_sum
+
+#H3K27me3
+upstream_h3k27me3 <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K27me3"]
+overlapping_h3k27me3 <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K27me3"]
+downstream_h3k27me3 <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K27me3"]
+
+total_sum <- sum(upstream_h3k27me3) + sum(overlapping_h3k27me3) + sum(downstream_h3k27me3)
+
+upstream_relative_h3k27me3 <- sum(upstream_h3k27me3) / total_sum
+overlapping_relative_h3k27me3 <- sum(overlapping_h3k27me3) / total_sum
+downstream_relative_h3k27me3 <- sum(downstream_h3k27me3) / total_sum
+
+#H3K36me3
+upstream_h3k36me3 <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K36me3"]
+overlapping_h3k36me3 <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K36me3"]
+downstream_h3k36me3 <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K36me3"]
+
+total_sum <- sum(upstream_h3k36me3) + sum(overlapping_h3k36me3) + sum(downstream_h3k36me3)
+
+upstream_relative_h3k36me3 <- sum(upstream_h3k36me3) / total_sum
+overlapping_relative_h3k36me3 <- sum(overlapping_h3k36me3) / total_sum
+downstream_relative_h3k36me3 <- sum(downstream_h3k36me3) / total_sum
+
+#H3K4me1
+upstream_h3k4me1 <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K4me1"]
+overlapping_h3k4me1 <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K4me1"]
+downstream_h3k4me1 <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K4me1"]
+
+total_sum <- sum(upstream_h3k4me1) + sum(overlapping_h3k4me1) + sum(downstream_h3k4me1)
+
+upstream_relative_h3k4me1 <- sum(upstream_h3k4me1) / total_sum
+overlapping_relative_h3k4me1 <- sum(overlapping_h3k4me1) / total_sum
+downstream_relative_h3k4me1 <- sum(downstream_h3k4me1) / total_sum
+
+#H3K4me3
+upstream_h3k4me3 <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K4me3"]
+overlapping_h3k4me3 <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K4me3"]
+downstream_h3k4me3 <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K4me3"]
+
+total_sum <- sum(upstream_h3k4me3) + sum(overlapping_h3k4me3) + sum(downstream_h3k4me3)
+
+upstream_relative_h3k4me3 <- sum(upstream_h3k4me3) / total_sum
+overlapping_relative_h3k4me3 <- sum(overlapping_h3k4me3) / total_sum
+downstream_relative_h3k4me3 <- sum(downstream_h3k4me3) / total_sum
+
+#H3K9me3
+upstream_h3k9me3 <- df_HM_Ov_RI$Upstream[df_HM_Ov_RI$Class == "H3K9me3"]
+overlapping_h3k9me3 <- df_HM_Ov_RI$Overlapping[df_HM_Ov_RI$Class == "H3K9me3"]
+downstream_h3k9me3 <- df_HM_Ov_RI$Downstream[df_HM_Ov_RI$Class == "H3K9me3"]
+
+total_sum <- sum(upstream_h3k9me3) + sum(overlapping_h3k9me3) + sum(downstream_h3k9me3)
+
+upstream_relative_h3k9me3 <- sum(upstream_h3k9me3) / total_sum
+overlapping_relative_h3k9me3 <- sum(overlapping_h3k9me3) / total_sum
+downstream_relative_h3k9me3 <- sum(downstream_h3k9me3) / total_sum
+```
+
+
+```{r}
+df_HM_Ov_RI_Percentage <- data.frame(
+  Upstream = c(upstream_relative_h3k27ac, upstream_relative_h3k27me3, upstream_relative_h3k36me3, upstream_relative_h3k4me1, upstream_relative_h3k4me3, upstream_relative_h3k9me3),
+  Overlapping = c(overlapping_relative_h3k27ac, overlapping_relative_h3k27me3, overlapping_relative_h3k36me3, overlapping_relative_h3k4me1, overlapping_relative_h3k4me3, overlapping_relative_h3k9me3),
+  Downstream = c(downstream_relative_h3k27ac, downstream_relative_h3k27me3, downstream_relative_h3k36me3, downstream_relative_h3k4me1, downstream_relative_h3k4me3, downstream_relative_h3k9me3),
+  Class = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
+)
+
+df_long_relative <- pivot_longer(df_HM_Ov_RI_Percentage, cols = c(Upstream, Overlapping, Downstream), names_to = "Location", values_to = "Percentage")
+
+# Create the stacked bar plot
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/StackedBarPlot_Relative_RI.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_long_relative, aes(x = Class, y = Percentage, fill = Location)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Relative Distribution of Significant Segments by Location \nand Histone Modification - RI",
+       x = "Histone Modification",
+       y = "Percentage") +
+  scale_fill_manual(values = c(Upstream = "#117733", Overlapping = "#88CCEE", Downstream = "#CC6677")) +
+  theme_minimal() 
+dev.off()
+
+```

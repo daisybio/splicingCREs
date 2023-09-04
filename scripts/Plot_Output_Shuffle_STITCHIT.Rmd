@@ -1,0 +1,398 @@
+---
+title: "Plot_Output_Shuffle_STITCHIT"
+output: html_document
+date: "2023-07-24"
+author: "Aïsha Schuhegger" 
+---
+
+Read in the created dataframe
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(stringr)
+library(tidyr)
+library(grid)
+```
+
+
+
+```{r}
+df_HM <- read.csv("/nfs/home/students/a.schuhe/scripts/splicingREMs/output_CorrelationShuffle/df_HM_SegSpearman.csv")
+df_HM$Event <- gsub("_H3.*", "", df_HM$Event)
+df_HM_0 <- df_HM[df_HM$Iteration == 0, ]
+EventType <- df_HM_0$Event.type
+se_color <- "#40B0A6"
+ri_color <- "#B277F5"
+resfactor = 3
+```
+
+#Histogram of the amount of significant segments (Spearman as correlation) (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_Amount_Significant_Segments_Spearman.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Spearman as Correlation)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the amount of significant segments (Spearman as correlation) (0 iterations) - Outliers excluded
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_Amount_Significant_Segments_Spearman_ExcludedOutliersAndNotExcluded.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Spearman as Correlation, Outliers excluded)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic() +
+                              xlim(0,50)
+dev.off()
+
+listtest <- unique(df_HM$Amount.Significant.Segments.Spearman)
+sort(listtest)
+```
+
+#Histogram of the amount of significant segments (Pearson as correlation) (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_Amount_Significant_Segments_Pearson.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Pearson, fill=EventType)) + 
+                              geom_histogram(bins=20,color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Pearson as Correlation)") + 
+                              facet_wrap(vars(Class))+
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the mean length of the length of the significant segments (Spearman as correlation) (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_mean_significant_segments_length_Spearman.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=mean.significant.segments.length.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Mean length of the significant segments within an Event") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Mean Length of Significant Segments \nby Event Type (Spearman)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the mean length of the length of the significant segments (Pearson as correlation) (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_mean_significant_segments_length_Pearson.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=mean.significant.segments.length.Pearson, fill=EventType)) + 
+                              geom_histogram(bins=20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Mean length of the significant segments within an Event") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Mean Length of Significant Segments \nby Event Type (Pearson)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+
+#Scatter Plot: Amount of significant segments against amount of IHEC entries (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/ScatterPlot_IHECEntries_significantSegments_Spearman.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x = Amount.Significant.Segments.Spearman, y = Total.Amount.of.IHEC.Entries)) +
+  geom_point(aes(colour = EventType)) +
+  scale_colour_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+  xlab("Amount of Significant Segments (Spearman) within an Event") +
+  ylab("Amount of IHEC Entries within an Event") +
+  labs(title="Relationship between Significant Segments and IHEC Entries by Event Type") +
+  theme(axis.line = element_line(colour = "black", size = 0.24)) +
+  facet_wrap(vars(Class))
+dev.off()
+```
+
+#Scatter Plot: Amount of Significant Segments (Spearman) against Amount of Significant Segments (Pearson) (0 iterations)
+```{r}
+png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/ScatterPlot_SignificantSegments_Spearman_Against_Pearson.png', res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x = Amount.Significant.Segments.Spearman, y = Amount.Significant.Segments.Pearson)) +
+  geom_point(aes(colour = EventType)) + # Points and color by group
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add the abline
+  scale_colour_manual(values = c("SE" = se_color, "RI" = ri_color)) +  # Change legend title
+  xlab("Amount of Significant Segments (Spearman) per Event") +         
+  ylab("Amount of Significant Segments (Pearson) per Event")  +           
+  theme(axis.line = element_line(colour = "black", # Changes the default theme
+                                 size = 0.24)) +
+  labs(title="Correlation Comparison of Significant Segments per Event Type") +
+  facet_wrap(vars(Class))
+dev.off()
+
+---
+title: "Plot_Output_Shuffle_STITCHIT"
+output: html_document
+date: "2023-07-24"
+author: "Aïsha Schuhegger" 
+---
+
+Read in the created dataframe
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(stringr)
+library(tidyr)
+library(grid)
+```
+
+
+
+```{r}
+#df_HM <- read.csv("/nfs/proj/splicingREMs/output_CorrelationShuffle/df_HM_SegSpearman.csv")
+df_HM <- read.csv("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/df_HM_SegSpearman.csv")
+df_HM$Event <- gsub("_H3.*", "", df_HM$Event)
+df_HM_0 <- df_HM[df_HM$Iteration == 0, ]
+EventType <- df_HM_0$Event.type
+se_color <- "#40B0A6"
+ri_color <- "#B277F5"
+resfactor = 3
+```
+
+#Histogram of the amount of significant segments (Spearman as correlation) (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Amount_Significant_Segments_Spearman.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/Histogram_Amount_Significant_Segments_Spearman.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Spearman as Correlation)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the amount of significant segments (Spearman as correlation) (0 iterations) - Outliers excluded
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_Amount_Significant_Segments_Spearman_ExcludedOutliers.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/Histogram_Amount_Significant_Segments_Spearman_ExcludedOutliersAndNotExcluded.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Spearman as Correlation, Outliers excluded)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic() +
+                              xlim(0,50)
+dev.off()
+
+listtest <- unique(df_HM$Amount.Significant.Segments.Spearman)
+sort(listtest)
+```
+
+#Histogram of the amount of significant segments (Pearson as correlation) (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Amount_Significant_Segments_Pearson.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/Histogram_Amount_Significant_Segments_Pearson.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=Amount.Significant.Segments.Pearson, fill=EventType)) + 
+                              geom_histogram(bins=20,color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of Significant Segments") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Significant Segments by Event Type \n(Pearson as Correlation)") + 
+                              facet_wrap(vars(Class))+
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the mean length of the length of the significant segments (Spearman as correlation) (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_mean_significant_segments_length_Spearman.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/Histogram_mean_significant_segments_length_Spearman.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=mean.significant.segments.length.Spearman, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Mean length of the significant segments within an Event") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Mean Length of Significant Segments \nby Event Type (Spearman)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+#Histogram of the mean length of the length of the significant segments (Pearson as correlation) (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Histogram_mean_significant_segments_length_Pearson.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/Histogram_mean_significant_segments_length_Pearson.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x=mean.significant.segments.length.Pearson, fill=EventType)) + 
+                              geom_histogram(bins=20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Mean length of the significant segments within an Event") +
+                              ylab("Amount of Events") + 
+                              labs(title="Distribution of Mean Length of Significant Segments \nby Event Type (Pearson)") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+
+#Scatter Plot: Amount of significant segments against amount of IHEC entries (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/ScatterPlot_IHECEntries_significantSegments_Spearman.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/ScatterPlot_IHECEntries_significantSegments_Spearman.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x = Amount.Significant.Segments.Spearman, y = Total.Amount.of.IHEC.Entries)) +
+  geom_point(aes(colour = EventType)) +
+  scale_colour_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+  xlab("Amount of Significant Segments (Spearman) within an Event") +
+  ylab("Amount of IHEC Entries within an Event") +
+  labs(title="Relationship between Significant Segments and IHEC Entries by Event Type") +
+  theme(axis.line = element_line(colour = "black", size = 0.24)) +
+  facet_wrap(vars(Class))
+dev.off()
+```
+
+#Scatter Plot: Amount of Significant Segments (Spearman) against Amount of Significant Segments (Pearson) (0 iterations)
+```{r}
+#png('/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/ScatterPlot_SignificantSegments_Spearman_Against_Pearson.png')
+png("/Users/as/Documents/UNI/Bioinformatik/2023_SoSe/BA/Figures/PlotsSTITCHIT/ScatterPlot_SignificantSegments_Spearman_Against_Pearson.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_0, aes(x = Amount.Significant.Segments.Spearman, y = Amount.Significant.Segments.Pearson)) +
+  geom_point(aes(colour = EventType)) + # Points and color by group
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add the abline
+  scale_colour_manual(values = c("SE" = se_color, "RI" = ri_color)) +  # Change legend title
+  xlab("Amount of Significant Segments (Spearman) per Event") +         
+  ylab("Amount of Significant Segments (Pearson) per Event")  +           
+  theme(axis.line = element_line(colour = "black", # Changes the default theme
+                                 size = 0.24)) +
+  labs(title="Correlation Comparison of Significant Segments per Event Type") +
+  facet_wrap(vars(Class))
+dev.off()
+```
+
+#Plot how the significant correlation values look like per event (Spearman as correlation) (0 iterations)
+```{r}
+#df_HM <- read.csv("/nfs/proj/splicingREMs/output_CorrelationShuffle/new_correlation_df.csv")
+correlation_df <- read.csv("/nfs/home/students/a.schuhe/scripts/splicingREMs/output_CorrelationShuffle/new_correlation_df.csv")
+correlation_df <- correlation_df[complete.cases(correlation_df), ]
+correlation_df$Event <- gsub("_H3.*", "", correlation_df$Event)
+correlation_df_not0 <- correlation_df[correlation_df$Iteration != 0, ]
+correlation_df_0 <- correlation_df[correlation_df$Iteration == 0, ]
+EventType <- correlation_df$Event.type
+unique_events_correlation <- unique(correlation_df$Event)
+length(unique_events_correlation) #Question: Why is this 611 and not 612? Maybe: one event does not have any correlation value. But is that even possible? 
+```
+
+
+```{r}
+#Note: The code only runs for 354 events. Then an error 'combine_vars()' occurs. But to see the overall results and to be able to compare plots, 354 is enough for now. 
+for (events in unique_events_correlation){
+  specific_correlation = correlation_df_not0[correlation_df_not0$Event == events,]
+  specific_correlation_0 = correlation_df_0[correlation_df_0$Event == events,]
+  EventType0 <- specific_correlation_0$Event.type
+  EventType <- specific_correlation$Event.type
+  
+  plot_correlation0 <- ggplot(specific_correlation_0, aes(x=Significant.Correlation.Values.Spearman, fill=EventType0)) +
+    geom_histogram(bins=20,color = "white", position = "dodge") +
+    scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+    labs(x="Correlation Values (Spearman, 0 iterations)", y="Frequency") + 
+    facet_wrap(vars(Class)) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust=1))
+     
+  
+  plot_correlation_other <- ggplot(specific_correlation, aes(x=Significant.Correlation.Values.Spearman, fill=EventType)) +
+    geom_histogram(bins=20,color = "white", position = "dodge") +
+    scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+    labs(x="Correlation Values (Spearman, 1-100 iterations)", y="Frequency") +
+    facet_wrap(vars(Class)) +
+    theme_classic()+
+    theme(axis.text.x = element_text(angle = 45, hjust=1))
+  
+  combined_title <- sprintf("Comparison of significant correlation values for Event \n%s\n(Spearman as Correlation, 0 vs. 1-100 iterations)", event)
+  title_grob <- textGrob(combined_title, gp = gpar(fontsize = 13))
+  combined_plot <- grid.arrange(plot_correlation0, plot_correlation_other, ncol = 2, top = title_grob)
+  final_plot <- cowplot::ggdraw(combined_plot) + 
+  theme(plot.background = element_rect(fill="white", color = NA))
+
+
+  events_parts <- unlist(strsplit(events, "_"))
+  dir_path <- "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/CorrelationsShuffled/"
+  dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+  filename <- sprintf("%s%s.png", dir_path, events_parts[1])
+  
+  # Save the plot as a PNG file
+  resfactor = 3
+  png(filename, res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+  plot(final_plot)
+  dev.off()
+}
+
+
+```
+
+
+
+
+```{r}
+unique_events <- unique(df_HM$Event)
+for (event in unique_events) {
+  specific_data <- df_HM[df_HM$Event == event & df_HM$Iteration != 0, ]
+  row_index <- which(df_HM$Event == event & df_HM$Iteration == 0)
+  EventType <- specific_data$Event.type
+
+
+  plot_Spearman <- ggplot(specific_data, aes(x = Amount.Significant.Segments.Spearman, fill = EventType)) +
+    geom_histogram(bins = 20, color = "white", position = "dodge") +
+    scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+    labs(x = "Amount Significant Segments (Spearman)", y = "Frequency") + 
+    facet_wrap(vars(Class)) + 
+    theme(plot.title = element_text(margin = margin(b = 10))) + 
+    theme_classic() + 
+    geom_vline(data=df_HM[df_HM$Class == "H3K27ac", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K27ac"]), color = "#DCBA11", linetype = "dashed") + 
+    geom_vline(data=df_HM[df_HM$Class == "H3K27me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K27me3"]), color = "#DCBA11", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K36me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K36me3"]), color = "#DCBA11", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K4me1", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K4me1"]), color = "#DCBA11", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K4me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K4me3"]), color = "#DCBA11", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K9me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Spearman[row_index][df_HM$Class[row_index] == "H3K9me3"]), color = "#DCBA11", linetype = "dashed") 
+
+  plot_Pearson <- ggplot(specific_data, aes(x = Amount.Significant.Segments.Pearson, fill = EventType)) +
+    geom_histogram(bins = 20, color = "white", position = "dodge") +
+    scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+    labs(x = "Amount Significant Segments (Pearson)", y = "Frequency") + 
+    facet_wrap(vars(Class)) +
+    theme(plot.title = element_text(margin = margin(b = 10))) + 
+    theme_classic() + 
+    geom_vline(data=df_HM[df_HM$Class =="H3K27ac", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K27ac"]), color = "brown", linetype = "dashed") + 
+    geom_vline(data=df_HM[df_HM$Class == "H3K27me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K27me3"]), color = "brown", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K36me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K36me3"]), color = "brown", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K4me1", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K4me1"]), color = "brown", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K4me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K4me3"]), color = "brown", linetype = "dashed") +
+    geom_vline(data=df_HM[df_HM$Class == "H3K9me3", ], aes(xintercept=df_HM$Amount.Significant.Segments.Pearson[row_index][df_HM$Class[row_index] == "H3K9me3"]), color = "brown", linetype = "dashed") 
+  
+  combined_title <- sprintf("Distribution of Significant Segments for Event \n %s\n(Spearman and Pearson Correlation)", event)
+  title_grob <- textGrob(combined_title, gp = gpar(fontsize = 13))
+  #title_grob <- grobTree( rectGrob(gp=gpar(fill="white")), textGrob(combined_title, gp=gpar(fontsize=10, col="black", fontface="bold"))) #(and use grid.draw) 
+  combined_plot <- grid.arrange(plot_Spearman, plot_Pearson, ncol = 2, top = title_grob)
+  final_plot <- cowplot::ggdraw(combined_plot) + 
+  theme(plot.background = element_rect(fill="white", color = NA))
+
+
+  events_parts <- unlist(strsplit(event, "_"))
+  dir_path <- "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/HistogramsShuffled/"
+  dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+  filename <- sprintf("%s%s.png", dir_path, events_parts[1])
+  
+  # Save the plot as a PNG file
+  resfactor = 3
+  png(filename, res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+  plot(final_plot)
+  dev.off()
+}
+```
+
+
+

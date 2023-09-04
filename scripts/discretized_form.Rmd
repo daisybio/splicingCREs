@@ -1,0 +1,218 @@
+---
+title: "discretized_form"
+output: html_document
+date: "2023-05-25"
+author: "Aïsha Schuhegger" 
+Note: "Download and run all Rmd files from the github repository. You will need the ermerging results." 
+---
+
+```{r}
+library(dplyr)
+```
+
+
+Create a new file (baesd on the data from the events file) where all the events belonging to the 'Included' or 'Excluded' cluster (regarding hclust) are excluded. 
+
+```{r}
+#Retained Intron 
+cluster_RI_3_histo_hclust #AS cluster regarding RI (based on specific events from the events.csv file)
+
+psi_RI_AS_1_df <- as.data.frame(psi_RI_AS_1_hclust)
+psi_RI_AS_2_df <- as.data.frame(psi_RI_AS_2_hclust)
+psi_RI_AS_3_df <- as.data.frame(psi_RI_AS_3_hclust)
+psi_RI_AS_4_df <- as.data.frame(psi_RI_AS_4_hclust)
+psi_RI_AS_5_df <- as.data.frame(psi_RI_AS_5_hclust)
+psi_RI_AS_6_df <- as.data.frame(psi_RI_AS_6_hclust)
+
+median_RI_AS_1 <- as.vector(quantile_RI_AS_1_hclust)
+median_RI_AS_2 <- as.vector(quantile_RI_AS_2_hclust)
+median_RI_AS_3 <- as.vector(quantile_RI_AS_3_hclust)
+median_RI_AS_4 <- as.vector(quantile_RI_AS_4_hclust)
+median_RI_AS_5 <- as.vector(quantile_RI_AS_5_hclust)
+median_RI_AS_6 <- as.vector(quantile_RI_AS_6_hclust)
+
+psi_RI_AS_1_df <- ifelse(psi_RI_AS_1_df > median_RI_AS_1[3], 1, 0)
+psi_RI_AS_2_df <- ifelse(psi_RI_AS_2_df > median_RI_AS_2[3], 1, 0)
+psi_RI_AS_3_df <- ifelse(psi_RI_AS_3_df > median_RI_AS_3[3], 1, 0)
+psi_RI_AS_4_df <- ifelse(psi_RI_AS_4_df > median_RI_AS_4[3], 1, 0)
+psi_RI_AS_5_df <- ifelse(psi_RI_AS_5_df > median_RI_AS_5[3], 1, 0)
+psi_RI_AS_6_df <- ifelse(psi_RI_AS_6_df > median_RI_AS_6[3], 1, 0)
+```
+
+```{r}
+#Retained Intron 
+#cluster_RI_3_histo_hclust #AS cluster regarding RI (based on specific events from the events.csv file)
+
+#df_names <- paste0("psi_RI_AS_", 1:6, "_df")
+#hclust_names <- paste0("psi_RI_AS_", 1:6, "_hclust")
+#median_names <- paste0("median_RI_AS_", 1:6)
+
+#lapply(seq_along(df_names), function(i) {
+#  psi_RI_AS_df <- get(df_names[i])
+#  median_RI_AS <- get(median_names[i])
+#  assign(df_names[i], as.data.frame(get(hclust_names[i])))
+#  assign(median_names[i], as.vector(get(hclust_names[i])))
+#  psi_RI_AS_df <- ifelse(psi_RI_AS_df > median_RI_AS[3], 1, 0)
+#  assign(df_names[i], psi_RI_AS_df)
+#})
+```
+
+
+```{r}
+discretized_df_RI <- dplyr::bind_rows(as.data.frame(psi_RI_AS_1_df), as.data.frame(psi_RI_AS_2_df), as.data.frame(psi_RI_AS_3_df), as.data.frame(psi_RI_AS_4_df), as.data.frame(psi_RI_AS_5_df), as.data.frame(psi_RI_AS_6_df))
+discretized_df_RI
+
+#cluster_SE_1_histo_hclust #AS cluster regarding SE 
+```
+
+```{r}
+#Skipped Exon 
+cluster_SE_1_histo_hclust #AS cluster regarding SE 
+
+psi_SE_AS_1_df <- as.data.frame(psi_SE_AS_1_hclust)
+psi_SE_AS_2_df <- as.data.frame(psi_SE_AS_2_hclust)
+psi_SE_AS_3_df <- as.data.frame(psi_SE_AS_3_hclust)
+psi_SE_AS_4_df <- as.data.frame(psi_SE_AS_4_hclust)
+psi_SE_AS_5_df <- as.data.frame(psi_SE_AS_5_hclust)
+psi_SE_AS_6_df <- as.data.frame(psi_SE_AS_6_hclust)
+
+median_SE_AS_1 <- as.vector(quantile_SE_AS_1_hclust)
+median_SE_AS_2 <- as.vector(quantile_SE_AS_2_hclust)
+median_SE_AS_3 <- as.vector(quantile_SE_AS_3_hclust)
+median_SE_AS_4 <- as.vector(quantile_SE_AS_4_hclust)
+median_SE_AS_5 <- as.vector(quantile_SE_AS_5_hclust)
+median_SE_AS_6 <- as.vector(quantile_SE_AS_6_hclust)
+
+psi_SE_AS_1_df <- ifelse(psi_SE_AS_1_df > median_SE_AS_1[3], 1, 0)
+psi_SE_AS_2_df <- ifelse(psi_SE_AS_2_df > median_SE_AS_2[3], 1, 0)
+psi_SE_AS_3_df <- ifelse(psi_SE_AS_3_df > median_SE_AS_3[3], 1, 0)
+psi_SE_AS_4_df <- ifelse(psi_SE_AS_4_df > median_SE_AS_4[3], 1, 0)
+psi_SE_AS_5_df <- ifelse(psi_SE_AS_5_df > median_SE_AS_5[3], 1, 0)
+psi_SE_AS_6_df <- ifelse(psi_SE_AS_6_df > median_SE_AS_6[3], 1, 0)
+
+
+discretized_df_SE <- dplyr::bind_rows(as.data.frame(psi_SE_AS_1_df), as.data.frame(psi_SE_AS_2_df), as.data.frame(psi_SE_AS_3_df), as.data.frame(psi_SE_AS_4_df), as.data.frame(psi_SE_AS_5_df), as.data.frame(psi_SE_AS_6_df))
+discretized_df_SE
+
+#cluster_SE_1_histo_hclust #AS cluster regarding SE 
+```
+
+Combine discretized_df_RI and discretized_df_SE
+```{r}
+discretized_df <- dplyr::bind_rows(discretized_df_RI, discretized_df_SE)
+# Order the data frame based on row names
+rownames_discretized_df <- as.vector(rownames(discretized_df))
+
+# Order the data frame based on row names
+discretized_df <- discretized_df[order(rownames_discretized_df), ]
+
+#for (i in 1:nrow(discretized_df)){
+#  rownames(discretized_df)[i] <- strsplit(rownames(discretized_df), ";")[[i]][1]
+#}
+# -> take event_id as identification for the rownames 
+
+head(discretized_df)
+
+```
+
+
+Create a file for every row and exclude the columns that have NA as value
+
+```{r}
+library(dplyr)
+
+epiatlas <- read.csv("/nfs/data/IHEC/RNAseq/epiatlas_metadata.csv")
+helper_eventID$ID <- as.integer(helper_eventID$ID)
+histone_modifications = c("H3K27ac", "H3K27me3", "H3K36me3", "H3K4me1", "H3K4me3", "H3K9me3")
+for (histone_modification in histone_modifications) {
+  # Create a new dataframe specific to the histone modification
+  temp_df <- discretized_df
+  
+  i <- 1
+  for (col_name in colnames(discretized_df)) {
+    filtered_data <- epiatlas %>% filter(grepl(col_name, epirr_id) & experiment_type == histone_modification & assay_type == "ChIP-Seq")
+    file_path <- filtered_data$data_file_path
+    modified_file_path <- basename(gsub("\\*", "fc.signal", file_path))
+    colnames(temp_df)[i] <- modified_file_path
+    i <- i + 1
+  }
+  
+  # Loop through each row in the new dataframe for the specific histone modification
+  for (i in 1:nrow(temp_df)) {
+    selected_row <- temp_df[i, ]
+    selected_row <- as.data.frame(selected_row)
+    row_name_EventID <- sub(";", "_", rownames(temp_df)[i])
+    #row_name <- helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])]
+    row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df[i,])])
+    rownames(selected_row) <- row_name
+    
+    selected_row <- selected_row[, !colSums(is.na(selected_row))]
+    
+    # Define the file name
+    file_name <- paste0("output_discretized/", row_name, "_", row_name_EventID, "_", histone_modification, ".txt")
+    
+    # Write the selected row to a file
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t", quote=FALSE)
+  }
+}
+
+```
+
+```{r}
+temp_df1 <- discretized_df
+head(temp_df1)
+  i <- 1
+  for (col_name in colnames(discretized_df)) {
+    filtered_data <- epiatlas %>% filter(grepl(col_name, epirr_id) & experiment_type == histone_modification & assay_type == "ChIP-Seq")
+    file_path <- filtered_data$data_file_path
+    modified_file_path <- basename(gsub("\\*", "fc.signal", file_path))
+    colnames(temp_df1)[i] <- modified_file_path
+    i <- i + 1
+  }
+  
+  head(temp_df1)
+  
+    selected_row <- temp_df1[1, ]
+    ncol(selected_row)
+    selected_row <- as.data.frame(selected_row)
+    row_name_EventID <- sub(";", "_", rownames(temp_df1)[i])
+    row_name <- sprintf("%015d", helper_eventID$ID[helper_eventID$event_id == rownames(temp_df1[1,])])
+    rownames(selected_row) <- row_name
+    
+    #selected_row <- selected_row[, !colSums(is.na(selected_row))]
+    
+    # Define the file name
+    file_name <- paste0("output_discretized/NA_", row_name, "_", row_name_EventID, "_", histone_modification, ".txt")
+    
+    # Write the selected row to a file
+    write.table(selected_row, file = file_name, row.names = TRUE, col.names = TRUE, sep = "\t", quote=FALSE)
+```
+
+Now: 0.5 is the threshold for every event 
+-> comparison between discretized_df and discretized_05_df
+```{r}
+#cluster_RI_3_histo_hclust #AS cluster regarding RI
+#cluster_SE_1_histo_hclust #AS cluster regarding SE
+
+cluster_RI_3_histo_hclust <- as.data.frame(cluster_RI_3_histo_hclust)
+cluster_SE_1_histo_hclust <- as.data.frame(cluster_SE_1_histo_hclust)
+
+psi_RI_AS_05_df <- ifelse(cluster_RI_3_histo_hclust > 0.5, 1, 0)
+psi_SE_AS_05_df <- ifelse(cluster_SE_1_histo_hclust > 0.5, 1, 0)
+
+
+discretized_05_df <- dplyr::bind_rows(as.data.frame(psi_RI_AS_05_df), as.data.frame(psi_SE_AS_05_df))
+
+rownames_discretized_05_df <- as.vector(rownames(discretized_05_df))
+
+# Order the data frame based on row names
+discretized_05_df <- discretized_05_df[order(rownames_discretized_05_df), ]
+
+```
+
+Comparison between the data frames 
+
+```{r}
+rowSums(discretized_df == discretized_05_df, na.rm=TRUE) #-> & NA beachten 
+```
+

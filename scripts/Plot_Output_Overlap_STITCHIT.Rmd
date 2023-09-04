@@ -1,0 +1,121 @@
+---
+title: "Plot_Output_Overlap_STITCHIT"
+author: "Aïsha"
+date: "8/11/2023"
+output: html_document
+---
+#TODO: Idee: Touching als Overlap miteinfügen
+#IDEE: 0 bei den Histogrammen exkludieren? 
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+df_HM_Overlap <- read.csv("/nfs/home/students/a.schuhe/scripts/splicingREMs/output_CorrelationShuffle/df_HM_Overlap_SegSpearman.csv")
+EventType <- df_HM_Overlap$Event.type
+se_color <- "#40B0A6"
+ri_color <- "#B277F5"
+resfactor = 3 
+```
+
+Upstream
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/pstream_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Upstream, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Upstream") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped upstream \nto the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+Overlapping Upstream Adjacent 
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingUpstreamAdjacent_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Overlapping.Upstream.Adjacent , fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Upstream Adjacent") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped upstream adjacent \nto the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+
+Overlapping Upstream Adjacent + Region of interest 
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingUpstreamAdjacent+RoI_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Overlapping.Upstream.Adjacent...RoI, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Upstream Adjacent + RoI") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped upstream adjacent \nand roi to the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+Overlapping Total Up + Down 
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingTotalUpDown_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Overlapping.Total.Up.Down, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: RoI Total Up & Down") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped total up & down \nto the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+Overlapping Downstream Adjacent + Region of interest
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingDownstreamAdjacent+RoI_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Overlapping.Downstream.Adjacent...RoI, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Downstream Adjacent + RoI") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped Downstream adjacent \nand roi to the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+Overlapping Downstream Adjacent 
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/OverlappingDownstreamAdjacent_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Overlapping.Downstream.Adjacent , fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Downstream Adjacent") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped downstream adjacent \nto the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
+
+Downstream
+```{r}
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/Downstream_Histogram.png", res = 72*resfactor, height=640*resfactor, width=640*resfactor)
+ggplot(df_HM_Overlap, aes(x=Downstream, fill=EventType)) + 
+                              geom_histogram(bins = 20, color = "white", position = "dodge") +
+                              scale_fill_manual(values = c("SE" = se_color, "RI" = ri_color)) +
+                              xlab("Amount of significant segments per event \nLocation: Downstream") +
+                              ylab("Count") + 
+                              labs(title="The amount of significant segments that overlapped downstream \nto the region of interest of the event") + 
+                              facet_wrap(vars(Class)) +
+                              theme_classic()
+dev.off()
+```
+
