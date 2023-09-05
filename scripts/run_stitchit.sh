@@ -11,14 +11,14 @@ do
   for modification in "${modifications[@]}"
   do
     discretized_file="/nfs/home/students/a.schuhe/scripts/splicingREMs/output_discretized/${file}_*_${modification}.txt"
-    continous_file="/nfs/home/students/a.schuhe/scripts/splicingREMs/output_continous/${file}_*_${modification}.txt"
+    continuous_file="/nfs/home/students/a.schuhe/scripts/splicingREMs/output_continuous/${file}_*_${modification}.txt"
 
     echo "Processing file: ${discretized_file}"
 
     ./nfs/proj/splicingREMs/STITCHIT_quirinmanz/STITCHIT/build/core/STITCH  -b /nfs/data3/IHEC/ChIP-Seq \
       -a /nfs/home/students/a.schuhe/scripts/splicingREMs/annotation_events.gtf \
       -d $discretized_file \
-      -o $continous_file \
+      -o $continuous_file \
       -s /nfs/home/students/a.schuhe/scripts/splicingREMs/hg38.chrom.sizes \
       -w 2500 -c 1 -p 1 -g "${file}" -z 10 \
       -f /nfs/home/students/a.schuhe/scripts/splicingREMs/output_STITCHIT/$modification \
