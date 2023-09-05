@@ -41,7 +41,7 @@ The location of the significant segments is also stored in a data frame. This is
 
 
 ____________________________________________________________________________________________________________________________________
-**Versions I used: **
+**Versions I used:**
 Python 3.7.3, R version 4.2.1, GNU bash version 5.1.16(1)-release
 
 **Author:** Aïsha Schuhegger 
