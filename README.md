@@ -9,36 +9,46 @@ Supervisor: Dr. Markus List
 2nd Supervisor: Dr. Josch Pauling 
 
 
-This repository includes all the scripts I have written, files I have used, and plots I have created to write my thesis. 
-For more information or if you have any questions feel free to ask and write an e-mail to a.schuhegger@tum.de. 
+This repository includes all the scripts, files I have used, and plots I have created to write my thesis. 
+For more information or if you have any questions, feel free to ask and write an e-mail to a.schuhegger@tum.de. 
 
-In the following, I'd like to explain the repository's structure. After that, I explain its usage: 
+I want to explain the repository's structure to you in the following. After that, I explain its usage: 
 
 **Structure of the repository**
 
 **Archive:**
-The /archive folder includes files and plots that I created but did not work with. 
+The "/archive" folder includes files and plots I created but did not work with. 
 
 **Correlation analysis:**
-The output_CorrelationShuffle/ includes the data frames constructed for the correlation analysis. You must notice that the file "df_HM_SegSpearman.csv" is not included in this repository as it is too big. You need to create it independently with the script "correlation_shuffle.py".
+The "output_CorrelationShuffle/" includes the data frames constructed for the correlation analysis. It would be best to notice that the file "df_HM_SegSpearman.csv" is not included in this repository as it is too big. You need to create it independently with the script "correlation_shuffle.py".
 
 **Discretized and continuous data:**
-The discretized and continuous PSI values for every event can be seen in the output_discretized/ and output_continous/ folders. 
+The discretized and continuous PSI values for every event can be seen in the "output_discretized/" and "output_continuous/" folders. 
 
 **Files:**
-The annotation_events.gtf file is based on the gtf format (https://www.ensembl.org/info/website/upload/gff.html) and produced with the file /scripts/gtf.Rmd. It is necessary as input for the algorithm STITCHIT.
-The files epiatlas_metadata.csv and events.csv.gz are previously computed datasets and are fundamental for this thesis. 
-The hg38.chrom.sizes file includes the chromosome sizes of the human (https://www.ncbi.nlm.nih.gov/assembly/?term=GCA_000001405). 
+The "annotation_events.gtf" file is based on the gtf format (https://www.ensembl.org/info/website/upload/gff.html) and produced with the file "/scripts/gtf.Rmd". It is necessary as input for the algorithm STITCHIT.
+The files "epiatlas_metadata.csv" and "events.csv.gz" are previously computed datasets and are fundamental for this thesis. 
+The "hg38.chrom.sizes" file includes the chromosome sizes of the human (https://www.ncbi.nlm.nih.gov/assembly/?term=GCA_000001405). 
 
 **Plots:**
-All the plots are contained in /plots. 
+All the plots are contained in "/plots". 
 
 **Scripts:**
-The scripts are available in /scripts. 
-The file /scripts/run_stitchit.sh is for the execution of STITCHIT. You have to notice that STICHIT is not part of this repository. You have to set it up on your own (see https://github.com/SchulzLab/STITCHIT). 
+The scripts are available in "/scripts". 
+The file "/scripts/run_stitchit.sh" is for the execution of STITCHIT. Just to let you know, STITCHIT is not part of this repository. You have to set it up on your own (see https://github.com/SchulzLab/STITCHIT). The output files I generated using STITCHIT are stored in the "output_STITCHIT/" folder. 
 
 **Usage of the repository**
-Events.csv serves as the basis for all of my scripts. The scripts hclust-RI.Rmd and hclust-SE.Rmd are used to create three clusters per event type (RI and SE) by hierarchical clustering the events. Moreover, they extract the truly alternatively spliced events from the included or excluded events. Also, they set a threshold for the PSI values of the alternatively spliced events to distinguish whether these are discretized to 0 or 1. The files gtf.Rmd, discretized_form.Rmd and continuous_form.Rmd create the necessary input files for STITCHIT. You find the gtf file under the name "annotation_events.gtf", the events with discretized PSI values in the folder "output_discretized/" and those with continuous PSI values in "output_continuous/".  
+
+"Events.csv" serves as the basis for all of my scripts. The script "Clustering_PSI.Rmd" represents the idea of clustering the events by using the k means algorithm. Therefore, I did not follow this approach and worked with hierarchical clustering. The scripts "hclust-RI.Rmd" and "hclust-SE.Rmd" are used to create three clusters per event type (RI and SE) by hierarchical clustering of the events. Moreover, they extract the truly alternatively spliced events from the included or excluded events. Also, they set a threshold for the PSI values of the alternatively spliced events to distinguish whether these are discretized to 0 or 1. The files "gtf. Rmd", "discretized_form.Rmd" and "continuous_form.Rmd" create the necessary input files for STITCHIT. They use the file "epiatlas_metadata.csv" to match the IHEC entry with the correct ChIP-Seq experiment file and its name. You find the gtf file under the name "annotation_events.gtf", the events with discretized PSI values in the folder "output_discretized/" and those with continuous PSI values in "output_continuous/".  
+
+The script "run_stitchit.sh" is for running STITCHIT. As explained above, you need to install STITCHIT on your own. Please take care of the rewriting of STITCHIT, as you need to modify it so that STITCHIT matches the bigwig files to the headers of the continuous and discretized event files. In general, "run_stitchit.sh" is based on the folder structure of the experimental bioinformatics server. If you are working with the server structure, you can find the bigwig files here: "/nfs/data3/IHEC/ChIP-Seq". The hg38.chrom.sizes file includes the chromosome sizes of the human and is also necessary to use STITCHIT. 
+
+The output files I generated using STITCHIT can be found in the folder "output_STITCHIT". With these, I did a quick check (with the script "sanity_check.py") and a size check ("size_check.py"). The "sanity_check.py" script checked whether all the PSI values of the output files generated by STITCHIT match the original PSI values and whether the row names of the output files of STITCHIT match the IHEC entry file names. Both were correct, and the sanity check ran through. The "size_check.py" checked whether the sizes of the Pearson and Spearman output files generated by STITCHIT were the same size. There were 19 events where this was different. These are excluded from further analysis. 
+
+The script "correlation_shuffle.py" constructed a data frame where all the significant segments (based on Pearson and Spearman correlation) are stored to do the correlation analysis. It was too large to hold it in git Hub. Therefore, you need to create it on your own. The script "correlation_dataframe.py" stored all the correlation values itself. The output file is stored in "output_CorrelationShuffle/new_correlation_df.csv.gz". I wrote the files "Plot_Output_STITCHIT.Rmd" and "Plot_Output_Shuffle_STITCHIT.Rmd" to create plots based on my correlation analysis. 
+
+The location of the significant segments is also stored in a data frame. This is generated by "overlap_segments.py". The more detailed version is caused by "overlap_segments_detail.py". You can find both data frames in the folder "output_CorrelationShuffle/". They are called "df_HM_Overlap_Up_Down_Ov_SegSpearman.csv" (general version) and "df_HM_Overlap_SegSpearman.csv" (more detailed version). With these output files, the script "Plots_Overlap_General.Rmd" and "Plot_Output_Overlap_STITCHIT.Rmd" create the plots which I used for my results regarding the location of the significant segments. All the plots are stored in "/plots". 
+
 
 
 
