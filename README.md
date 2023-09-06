@@ -1,7 +1,6 @@
 # Detecting splicing-specific regulatory elements through integrative analysis of the epigenome and transcriptome
 
-The goal is to detect splicing-specific regulatory elements. This repository includes all the scripts, files I have used, and plots I have created to write my thesis. For more information or if you have any questions, feel free to ask and write an e-mail to a.schuhegger@tum.de. 
-
+The goal is to detect splicing-specific regulatory elements. This repository includes all the scripts, files I have used, and plots I have created to write my thesis.
 I want to explain the repository's structure to you in the following. After that, I explain its usage: 
 
 ## Structure of the repository
@@ -46,9 +45,12 @@ The location of the significant segments is also stored in a data frame. This is
 
 
 ____________________________________________________________________________________________________________________________________
+
 **Versions I used:**
 Python 3.7.3, R version 4.2.1, GNU bash version 5.1.16(1)-release
 
+For more information or if you have any questions, feel free to ask and write an e-mail to a.schuhegger@tum.de. 
+____________________________________________________________________________________________________________________________________
 **Author:** Aïsha Schuhegger 
 
 **Advisor:** Quirin Manz
