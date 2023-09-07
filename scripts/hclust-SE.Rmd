@@ -84,7 +84,7 @@ cutree_result_SE <- cutree(hclust_result_SE, k = num_branches)
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_SE.pdf")
 plot(hclust_result_SE, hang = -1, main = "Dendrogram Skipped Exon", labels = FALSE, xlab = "Distance")
-rect.hclust(hclust_result_SE, k = 3, border = "blue")
+rect.hclust(hclust_result_SE, k = 3, border = "#40B0A6")
 dev.off()
 
 
@@ -191,6 +191,7 @@ quantiles_SE_hclust <- data.frame(quantile_SE_3_hclust, quantile_SE_1_hclust, qu
 col_names_SE_hclust <- c("Excluded - SE", "Alternitavely Spliced - SE", "Included - SE")
 colnames(quantiles_SE_hclust) <- col_names_SE_hclust
 quantiles_SE_hclust
+
 table_quantiles_SE_hclust <- kable(quantiles_SE_hclust, format = "html", table.attr = "border=\"1\"", 
                             caption = "Quantiles SE - hierarchical clustering", align="ccc") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
@@ -234,6 +235,10 @@ table_quantiles_RI_SE_hclust <- kable(quantiles_RI_SE, format = "html", table.at
 table_quantiles_RI_SE_hclust
 save_kable(x=table_quantiles_RI_SE_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_SE_hclust.html")
 
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_SE_hclust.png") #add res=, height=,width=
+grid.table(table_quantiles_RI_SE_hclust)
+dev.off()
+
 ```
 
 
@@ -255,7 +260,7 @@ plot(hclust_result_SE_1, label=FALSE)
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_SE_AltSpl.pdf")
 plot(hclust_result_SE_1, hang = -1, main = "Dendrogram Skipped Exon - only Alternatively Spliced Branch", labels = FALSE, xlab = "Distance")
-rect.hclust(hclust_result_SE_1, k = 6, border = "blue")
+rect.hclust(hclust_result_SE_1, k = 6, border = "#40B0A6")
 dev.off()
 ```
 
@@ -360,5 +365,8 @@ table_quantiles_SE_AS_6_hclust <- kable(quantiles_SE_AS_6, format = "html", tabl
 table_quantiles_SE_AS_6_hclust
 save_kable(x=table_quantiles_SE_AS_6_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE_AS_6_hclust.html")
 
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE_AS_6_hclust.png") #add res=, height=, width= 
+grid.table(quantiles_SE_AS_6)
+dev.off()
 ```
 

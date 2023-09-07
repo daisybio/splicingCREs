@@ -23,6 +23,7 @@ For that the script has different parts consisting of:
 # 0. Libraries
 ```{r}
 library(data.table)
+library(webshot)
 library(R.utils)
 library(pbmcapply)
 library(ggplot2)
@@ -33,6 +34,7 @@ library('factoextra')
 library(stats)
 library(knitr)
 library(kableExtra)
+library(gridExtra)
 Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
   int n = a.size();
   NumericVector dist = NumericVector(n);
@@ -250,14 +252,22 @@ quantile_SE_Excluded <- quantile(data_median_cluster_SE_Excluded, probs = seq(0,
 quantile_SE_Excluded 
 
 quantiles_SE <- data.frame(quantile_SE_Included, quantile_SE_AltSpl, quantile_SE_Excluded)
-col_names <- c("Included", "Alternatively Spliced", "Excluded")
+col_names <- c("Included - SE", "Alternatively Spliced - SE", "Excluded - SE")
 colnames(quantiles_SE) <- col_names
 
 table_quantiles_SE <- kable(quantiles_SE, format = "html", table.attr = "border=\"1\"", 
                             caption = "Quantiles SE", align="ccc") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling(bootstrap_options = c("striped", "hover")) 
 
 save_kable(x=table_quantiles_SE, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SE.html")
+
+quantiles_SE <- round(quantiles_SE, digits = 2)
+
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_SEkmeans.png", res = 72*resfactor, height=130*resfactor, width=380*resfactor)
+grid.table(quantiles_SE)
+dev.off()
+
+# Capture the table as a screenshot and save it as a PNG
 
 
 # Create the density plot for the median values of each cluster 
@@ -374,7 +384,7 @@ quantile_RI_Excluded <- quantile(data_median_cluster_RI_Excluded, probs = seq(0,
 quantile_RI_Excluded 
 
 quantiles_RI <- data.frame(quantile_RI_Included, quantile_RI_AltSpl, quantile_RI_Excluded)
-col_names <- c("Included", "Alternatively Spliced", "Excluded")
+col_names <- c("Included - RI", "Alternatively Spliced - RI", "Excluded - RI")
 colnames(quantiles_RI) <- col_names
 
 table_quantiles_RI <- kable(quantiles_RI, format = "html", table.attr = "border=\"1\"", 
@@ -382,6 +392,12 @@ table_quantiles_RI <- kable(quantiles_RI, format = "html", table.attr = "border=
   kable_styling(bootstrap_options = c("striped", "hover"))
 
 save_kable(x=table_quantiles_RI, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI.html")
+
+quantiles_RI <- round(quantiles_RI, digits = 2)
+
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RIkmeans.png", res = 72*resfactor, height=130*resfactor, width=380*resfactor)
+grid.table(quantiles_RI)
+dev.off()
 
 
 # Create the density plot for the median values of each cluster 

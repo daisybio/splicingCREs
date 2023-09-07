@@ -82,7 +82,7 @@ hclust_result_RI <- hclust(dist_RI)
 # Plot the dendrogram with three branches
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_RI.pdf")
 plot(hclust_result_RI, hang = -1, main = "Dendrogram Retained Intron", labels = FALSE, xlab = "Distance")
-rect.hclust(hclust_result_RI, k = 3, border = "lightpink")
+rect.hclust(hclust_result_RI, k = 3, border = "#B277F5")
 dev.off()
 
 #Look at the intersection between hclust cluster and kmeans cluster 
@@ -191,6 +191,10 @@ table_quantiles_RI_hclust <- kable(quantiles_RI_hclust, format = "html", table.a
 table_quantiles_RI_hclust
 save_kable(x=table_quantiles_RI_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_hclust.html")
 
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_hclust.png") #add res=, height=,width=
+grid.table(quantiles_RI_hclust)
+dev.off()
+
 ```
 
 Having a further look on cluster 3 -> Alternatively Spliced 
@@ -211,7 +215,7 @@ plot(hclust_result_RI_3, label=FALSE)
 
 pdf("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/dendrogram_RI_AltSpl.pdf")
 plot(hclust_result_RI_3, hang = -1, main = "Dendrogram Retained Intron - only Alternatively Spliced Branch", labels = FALSE, xlab = "Distance")
-rect.hclust(hclust_result_RI_3, k = 6, border = "lightpink")
+rect.hclust(hclust_result_RI_3, k = 6, border = "#B277F5")
 dev.off()
 
 ```
@@ -313,6 +317,10 @@ table_quantiles_RI_AS_6_hclust <- kable(quantiles_RI_AS_6, format = "html", tabl
   kable_styling(bootstrap_options = c("striped", "hover"))
 table_quantiles_RI_AS_6_hclust
 save_kable(x=table_quantiles_RI_AS_6_hclust, file= "/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_AS_6_hclust.html")
+
+png("/nfs/home/students/a.schuhe/scripts/splicingREMs/plots/quantiles_RI_AS_6_hclust.png") # add res=, height=, width= 
+grid.table(table_quantiles_RI_AS_6_hclust)
+dev.off()
 
 ```
 
